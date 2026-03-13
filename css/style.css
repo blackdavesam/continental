@@ -1,0 +1,1145 @@
+/* ============================================================
+   CONTINENTAL — style.css
+   Flight simulator meets strategy game
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600&family=Barlow:wght@300;400;500&display=swap');
+
+/* --- RESET & BASE --- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #080c18;
+  --bg2:      #0f1520;
+  --bg3:      #141c2e;
+  --gold:     #f0a500;
+  --gold-dim: #a06e00;
+  --teal:     #06b6d4;
+  --red:      #ef4444;
+  --green:    #22c55e;
+  --muted:    #4a5568;
+  --text:     #e2e8f0;
+  --text-dim: #64748b;
+  --border:   rgba(255,255,255,0.08);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-ui: 'Barlow Condensed', sans-serif;
+  --font-body: 'Barlow', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  overflow: hidden;
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+.screen { display: none; position: fixed; inset: 0; width: 100%; height: 100%; }
+.screen.active { display: flex; }
+
+/* ============================================================
+   SETUP SCREEN
+   ============================================================ */
+#screen-setup {
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(6,182,212,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(240,165,0,0.05) 0%, transparent 50%);
+}
+
+.setup-card {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 48px;
+  width: min(480px, 90vw);
+}
+
+.setup-logo {
+  font-family: var(--font-display);
+  font-size: 52px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.setup-logo { margin-bottom: 36px; }
+
+.setup-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.setup-select {
+  width: 100%;
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.name-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.team-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.team-name-input {
+  flex: 1;
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.team-name-input:focus { border-color: var(--gold); }
+
+/* ============================================================
+   GAME SCREEN
+   ============================================================ */
+#screen-game {
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Map */
+#map {
+  position: absolute;
+  inset: 0;
+  bottom: 48px; /* leave room for team strip */
+}
+
+/* Top bar */
+#top-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+#game-logo {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  pointer-events: auto;
+}
+
+#win-condition-badge {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  background: rgba(8,12,24,0.85);
+  border: 0.5px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 99px;
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: auto;
+  cursor: default;
+}
+
+/* Team strip */
+#team-strip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: rgba(8,12,24,0.92);
+  backdrop-filter: blur(8px);
+  border-top: 0.5px solid var(--border);
+  display: flex;
+  z-index: 10;
+}
+
+.team-chip {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-right: 0.5px solid var(--border);
+  transition: background 0.3s;
+  font-family: var(--font-ui);
+}
+
+.team-chip.active {
+  background: rgba(240,165,0,0.06);
+  border-top: 2px solid var(--team-color);
+}
+
+.team-chip.inactive { opacity: 0.5; }
+
+.team-chip-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--team-color);
+  white-space: nowrap;
+}
+
+.team-chip-cash {
+  font-size: 13px;
+  color: var(--gold);
+  margin-left: auto;
+}
+
+.team-chip-cities {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   ACTION PANEL
+   ============================================================ */
+#action-panel {
+  position: absolute;
+  bottom: 56px;
+  right: 12px;
+  width: 280px;
+  background: rgba(8,12,24,0.95);
+  backdrop-filter: blur(12px);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  z-index: 20;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+}
+#action-panel.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.action-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-family: var(--font-ui);
+}
+
+.action-team-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.action-team-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.action-cash {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.action-buttons { display: flex; flex-direction: column; gap: 8px; }
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  width: 100%;
+}
+
+.action-btn:hover { background: rgba(255,255,255,0.05); transform: translateY(-1px); }
+.action-btn:active { transform: translateY(0); }
+.btn-challenge:hover { border-color: var(--teal); }
+.btn-fly:hover { border-color: var(--gold); }
+
+.action-icon { font-size: 20px; }
+
+.action-label {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  display: block;
+}
+
+.action-sub {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-dim);
+  display: block;
+}
+
+/* ============================================================
+   OVERLAYS (shared)
+   ============================================================ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.overlay:not(.transparent) {
+  background: rgba(8,12,24,0.75);
+  backdrop-filter: blur(4px);
+}
+
+/* ============================================================
+   REVEAL CARD (home city)
+   ============================================================ */
+.reveal-card {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 48px;
+  text-align: center;
+  max-width: 440px;
+  animation: slideUp 0.4s ease;
+}
+
+.reveal-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.reveal-city {
+  font-family: var(--font-display);
+  font-size: 64px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.reveal-airport {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+
+.reveal-tagline {
+  font-size: 15px;
+  color: var(--text);
+  font-style: italic;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   BOARDING PASS
+   ============================================================ */
+.boarding-pass {
+  background: #f8f5ee;
+  color: #1a1a1a;
+  border-radius: 12px;
+  width: min(520px, 90vw);
+  overflow: hidden;
+  animation: slideUp 0.4s ease;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.bp-header {
+  background: #1a1a2e;
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 4px solid var(--team-color, var(--gold));
+}
+
+.bp-airline {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+
+.bp-flight-num {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+}
+
+.bp-route {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  gap: 12px;
+}
+
+.bp-city-block { flex: 1; }
+
+.bp-iata {
+  font-family: var(--font-display);
+  font-size: 48px;
+  color: #1a1a2e;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.bp-city-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.bp-time {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+  margin-top: 4px;
+}
+
+.bp-arrow {
+  flex: 0.8;
+  text-align: center;
+  position: relative;
+}
+
+.bp-arrow-line {
+  height: 1px;
+  background: #ccc;
+  position: relative;
+}
+
+.bp-plane-icon {
+  font-size: 20px;
+  color: #1a1a2e;
+  margin: -2px 0;
+}
+
+.bp-distance {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: #888;
+}
+
+.bp-footer {
+  padding: 16px 24px;
+  border-top: 1px dashed #ccc;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.bp-detail { font-family: var(--font-ui); }
+.bp-detail span { font-size: 9px; letter-spacing: 1.5px; color: #888; display: block; }
+.bp-detail strong { font-size: 14px; color: #222; }
+
+.bp-barcode {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #333;
+  font-family: monospace;
+}
+
+.bp-launch {
+  width: 100%;
+  border-radius: 0;
+  border-top: 1px solid #eee;
+  background: #1a1a2e !important;
+  color: var(--gold) !important;
+  padding: 16px !important;
+  font-size: 16px !important;
+}
+
+/* ============================================================
+   FLIGHT SCREEN OVERLAY
+   ============================================================ */
+.flight-screen {
+  background: rgba(4,8,20,0.96);
+  border: 0.5px solid rgba(6,182,212,0.3);
+  border-radius: 12px;
+  width: min(480px, 90vw);
+  padding: 0;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 0 40px rgba(6,182,212,0.1);
+}
+
+.fs-header {
+  background: rgba(6,182,212,0.08);
+  border-bottom: 0.5px solid rgba(6,182,212,0.2);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fs-airline {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--teal);
+  letter-spacing: 1px;
+}
+
+.fs-flight {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.fs-route {
+  font-size: 13px;
+  color: var(--text);
+  margin-left: auto;
+}
+
+.fs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+}
+
+.fs-stat {
+  padding: 16px 20px;
+  border-right: 0.5px solid rgba(255,255,255,0.05);
+  border-bottom: 0.5px solid rgba(255,255,255,0.05);
+}
+
+.fs-stat-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.fs-stat-value {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--teal);
+  letter-spacing: 1px;
+}
+
+.fs-dest { font-size: 18px; color: var(--gold); }
+
+.fs-progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+}
+
+.fs-progress-fill {
+  height: 100%;
+  background: var(--teal);
+  width: 0%;
+  transition: width 0.5s linear;
+}
+
+/* ============================================================
+   CHALLENGE
+   ============================================================ */
+.challenge-card {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  width: min(560px, 90vw);
+  animation: slideUp 0.3s ease;
+}
+
+.challenge-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.challenge-diff {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  text-transform: uppercase;
+}
+
+.diff-easy   { background: rgba(34,197,94,0.15);  color: var(--green); }
+.diff-medium { background: rgba(240,165,0,0.15);  color: var(--gold); }
+.diff-hard   { background: rgba(239,68,68,0.15);  color: var(--red); }
+
+.challenge-payout {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--gold);
+  margin-left: auto;
+}
+
+.challenge-timer-bar {
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.challenge-timer-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--teal);
+  transition: width 0.1s linear;
+}
+
+.challenge-question {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.challenge-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.challenge-options.odd-one-out {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.option-btn {
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  padding: 16px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  text-align: center;
+}
+
+.option-btn:hover {
+  background: rgba(240,165,0,0.08);
+  border-color: var(--gold);
+  transform: translateY(-1px);
+}
+
+.option-btn:active { transform: scale(0.98); }
+
+.bullseye-instruction {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.bullseye-icon { font-size: 40px; margin-bottom: 10px; }
+
+.bullseye-text {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   RESULT
+   ============================================================ */
+.result-card {
+  background: var(--bg2);
+  border-radius: 16px;
+  padding: 36px;
+  text-align: center;
+  width: min(400px, 90vw);
+  animation: slideUp 0.3s ease;
+}
+
+.result-card.correct  { border: 0.5px solid rgba(34,197,94,0.4); }
+.result-card.incorrect { border: 0.5px solid rgba(239,68,68,0.3); }
+
+.result-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.result-card.correct .result-icon   { color: var(--green); }
+.result-card.incorrect .result-icon { color: var(--red); }
+
+.result-label {
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.result-payout {
+  font-family: var(--font-ui);
+  font-size: 20px;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+.result-fact {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  font-style: italic;
+}
+
+/* ============================================================
+   ARRIVAL
+   ============================================================ */
+.arrival-card {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  width: min(480px, 90vw);
+  animation: slideUp 0.4s ease;
+}
+
+.arrival-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.arrival-city {
+  font-family: var(--font-display);
+  font-size: 56px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.arrival-airport {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+
+.arrival-new {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--teal);
+  margin-bottom: 6px;
+}
+
+.arrival-bonus {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+.arrival-fact {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  font-style: italic;
+  margin-bottom: 24px;
+}
+
+.arrival-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* ============================================================
+   DOSSIER
+   ============================================================ */
+.dossier-panel {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  width: min(440px, 90vw);
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+  position: relative;
+}
+
+.dossier-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.dossier-header {
+  background: var(--bg3);
+  padding: 28px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.dossier-iata {
+  font-family: var(--font-display);
+  font-size: 48px;
+  color: var(--gold);
+  letter-spacing: 4px;
+  line-height: 1;
+}
+
+.dossier-city {
+  font-family: var(--font-ui);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+.dossier-tagline {
+  font-size: 13px;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-top: 6px;
+}
+
+.dossier-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.dossier-stat {
+  padding: 14px 20px;
+  border-right: 0.5px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
+  font-family: var(--font-ui);
+}
+
+.dossier-stat span { font-size: 10px; letter-spacing: 1.5px; color: var(--text-dim); display: block; }
+.dossier-stat strong { font-size: 15px; color: var(--text); }
+
+.dossier-did-you-know {
+  padding: 20px;
+}
+
+.dossier-dyk-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--teal);
+  margin-bottom: 8px;
+}
+
+.dossier-dyk-text {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+/* ============================================================
+   FLIGHT PICKER
+   ============================================================ */
+#overlay-flight-picker .overlay { align-items: flex-end; }
+
+.picker-panel {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  width: min(680px, 100vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+}
+
+.picker-header {
+  padding: 20px 20px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.picker-title {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.picker-balance {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--gold);
+  margin-left: auto;
+}
+
+.picker-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.picker-search {
+  padding: 12px 20px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.picker-search input {
+  width: 100%;
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  padding: 8px 12px;
+  outline: none;
+}
+
+.picker-cities {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.flight-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 0.5px solid var(--border);
+  gap: 12px;
+}
+
+.flight-dest { flex: 1; }
+
+.flight-city {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  display: block;
+}
+
+.flight-meta {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-dim);
+  display: block;
+}
+
+.flight-airlines {
+  display: flex;
+  gap: 6px;
+}
+
+.airline-btn {
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+
+.airline-btn:hover:not(.disabled) {
+  border-color: var(--gold);
+  background: rgba(240,165,0,0.06);
+}
+
+.airline-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.airline-name { font-size: 10px; color: var(--text-dim); display: block; }
+.airline-cost { font-size: 13px; color: var(--gold); }
+
+/* ============================================================
+   WIN SCREEN
+   ============================================================ */
+.win-screen {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 48px;
+  text-align: center;
+  width: min(480px, 90vw);
+  animation: slideUp 0.4s ease;
+}
+
+.win-label {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.win-team {
+  font-family: var(--font-display);
+  font-size: 56px;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.win-stat {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-bottom: 28px;
+}
+
+.win-leaderboard { margin-bottom: 28px; }
+
+.win-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--border);
+  font-family: var(--font-ui);
+}
+
+.win-lb-row.winner { background: rgba(240,165,0,0.04); border-radius: 8px; padding: 10px 8px; }
+.win-lb-rank { font-size: 13px; color: var(--text-dim); width: 20px; }
+.win-lb-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.win-lb-name { font-size: 15px; color: var(--text); flex: 1; text-align: left; }
+.win-lb-cities { font-size: 13px; color: var(--text-dim); }
+.win-lb-cash { font-size: 13px; color: var(--gold); margin-left: 8px; }
+
+/* ============================================================
+   NOTIFICATIONS
+   ============================================================ */
+#notifications {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.notification {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 99px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.notif-error { background: rgba(239,68,68,0.15); border: 0.5px solid var(--red); color: var(--red); }
+.notif-info  { background: rgba(6,182,212,0.12);  border: 0.5px solid var(--teal); color: var(--teal); }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-primary {
+  background: var(--gold);
+  color: #080c18;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 28px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-dim);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-secondary:hover { border-color: var(--text-dim); color: var(--text); }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
