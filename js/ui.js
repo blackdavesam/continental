@@ -123,10 +123,11 @@ const UI = {
         <span class="action-cash">$${team.cash.toLocaleString()}</span>
       </div>
       <div class="action-buttons">
-        <button class="action-btn btn-challenge" onclick="GAME.drawChallenge()">
+        <button class="action-btn btn-challenge ${GAME.challengeTakenThisTurn ? 'used' : ''}"
+          onclick="GAME.drawChallenge()" ${GAME.challengeTakenThisTurn ? 'disabled' : ''}>
           <span class="action-icon">🎯</span>
           <span class="action-label">Take a Challenge</span>
-          <span class="action-sub">Earn Flight Points</span>
+          <span class="action-sub">${GAME.challengeTakenThisTurn ? 'Already used this turn' : 'Earn Flight Points'}</span>
         </button>
         <button class="action-btn btn-fly" onclick="UI.showFlightPicker()">
           <span class="action-icon">✈</span>

@@ -37,6 +37,7 @@ const GAME = {
   activeChallenge: null,
   activeFlight: null,
   mapReady: false,
+  challengeTakenThisTurn: false,
 
   // --- COMPUTED ---
   get currentTeam() {
@@ -100,6 +101,7 @@ const GAME = {
   // --- TURN MANAGEMENT ---
   startTurn() {
     this.state = 'playing';
+    this.challengeTakenThisTurn = false;
     UI.expandTeamPanel(this.currentTeamIndex);
     UI.showTurnActions(this.currentTeam);
     if (this.mapReady) MAP.flyTo(this.currentTeam.currentCity.lng, this.currentTeam.currentCity.lat, 4);
@@ -113,11 +115,13 @@ const GAME = {
 
   // --- CHALLENGE ---
   drawChallenge() {
+    if (this.challengeTakenThisTurn) return;
     const available = QUESTIONS.filter(q =>
       !this.activeChallenge || q.id !== this.activeChallenge.id
     );
     const q = available[Math.floor(Math.random() * available.length)];
     this.activeChallenge = q;
+    this.challengeTakenThisTurn = true;
     this.state = 'challenge';
     UI.showChallenge(q);
   },

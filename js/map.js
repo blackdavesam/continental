@@ -18,10 +18,11 @@ const MAP = {
       protocol.tile(params, abortController)
     );
 
-    // Resolve paths relative to index.html
+    // Resolve paths relative to the HTML file
     const base = window.location.href.replace(/\/[^/]*$/, '/');
-    const glyphBase = base + 'assets/fonts/glyphs/';
     const pmtilesUrl = base + 'north-america.pmtiles';
+    // Use Protomaps CDN for glyphs — no local font files needed
+    const glyphBase = 'https://protomaps.github.io/basemaps-assets/fonts/';
 
     this.instance = new maplibregl.Map({
       container: 'map',
@@ -63,28 +64,28 @@ const MAP = {
         {
           id: 'background',
           type: 'background',
-          paint: { 'background-color': '#080c18' }
+          paint: { 'background-color': '#071525' }        // deep ocean
         },
         {
           id: 'water',
           type: 'fill',
           source: 'protomaps',
           'source-layer': 'water',
-          paint: { 'fill-color': '#0d1a2e' }
+          paint: { 'fill-color': '#09192e' }              // lakes / rivers
         },
         {
           id: 'land',
           type: 'fill',
           source: 'protomaps',
           'source-layer': 'land',
-          paint: { 'fill-color': '#0f1829' }
+          paint: { 'fill-color': '#1e3550' }              // landmass — clearly brighter than ocean
         },
         {
           id: 'landcover',
           type: 'fill',
           source: 'protomaps',
           'source-layer': 'landcover',
-          paint: { 'fill-color': '#111e30', 'fill-opacity': 0.6 }
+          paint: { 'fill-color': '#1a3048', 'fill-opacity': 0.5 }
         },
         {
           id: 'countries',
@@ -92,7 +93,7 @@ const MAP = {
           source: 'protomaps',
           'source-layer': 'boundaries',
           filter: ['==', ['get', 'kind'], 'country'],
-          paint: { 'line-color': '#1e3050', 'line-width': 1 }
+          paint: { 'line-color': '#5080a8', 'line-width': 1.2 }
         },
         {
           id: 'states',
@@ -101,8 +102,8 @@ const MAP = {
           'source-layer': 'boundaries',
           filter: ['==', ['get', 'kind'], 'region'],
           paint: {
-            'line-color': '#162540',
-            'line-width': 0.5,
+            'line-color': '#2e5070',
+            'line-width': 0.6,
             'line-dasharray': [3, 3]
           }
         },
@@ -113,7 +114,7 @@ const MAP = {
           'source-layer': 'roads',
           minzoom: 6,
           paint: {
-            'line-color': '#1a2d45',
+            'line-color': '#243f5c',
             'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.5]
           }
         },
@@ -126,15 +127,15 @@ const MAP = {
           layout: {
             'text-field': ['get', 'name'],
             'text-font': ['Noto Sans Regular'],
-            'text-size': ['interpolate', ['linear'], ['zoom'], 4, 9, 8, 13],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 3, 10, 6, 12, 9, 14],
             'text-max-width': 8,
             'text-anchor': 'top',
             'text-offset': [0, 0.3],
           },
           paint: {
-            'text-color': '#3d5470',
-            'text-halo-color': '#080c18',
-            'text-halo-width': 1.2,
+            'text-color': '#b8d4f0',
+            'text-halo-color': '#071525',
+            'text-halo-width': 1.5,
           }
         },
       ],

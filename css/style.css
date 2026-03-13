@@ -294,6 +294,8 @@ html, body {
 .action-btn:active { transform: translateY(0); }
 .btn-challenge:hover { border-color: var(--teal); }
 .btn-fly:hover { border-color: var(--gold); }
+.action-btn.used { opacity: 0.4; cursor: not-allowed; }
+.action-btn.used:hover { background: var(--bg3); transform: none; border-color: var(--border); }
 
 .action-icon { font-size: 20px; }
 
