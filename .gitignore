@@ -1,0 +1,12 @@
+# Map tiles (large binary — download separately)
+*.pmtiles
+
+# macOS
+.DS_Store
+
+# PMTiles CLI binary
+pmtiles
+
+# Root-level lib copies (use libs/ instead)
+maplibre-gl.css
+maplibre-gl.min.js

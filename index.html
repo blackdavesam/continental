@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CONTINENTAL</title>
+  <link rel="stylesheet" href="libs/maplibre-gl.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========================================================
+       NOTIFICATIONS
+       ======================================================== -->
+  <div id="notifications"></div>
+
+  <!-- ========================================================
+       SETUP SCREEN
+       ======================================================== -->
+  <div class="screen active" id="screen-setup">
+    <div class="setup-card">
+      <div class="setup-logo">CONTINENTAL</div>
+
+      <form id="setup-form">
+        <div class="setup-label">NUMBER OF TEAMS</div>
+        <select class="setup-select" id="team-count">
+          <option value="2">2 Teams</option>
+          <option value="3" selected>3 Teams</option>
+          <option value="4">4 Teams</option>
+        </select>
+
+        <div class="setup-label">TEAM NAMES</div>
+        <div id="team-name-inputs"></div>
+
+        <button type="submit" class="btn-primary" style="width:100%;margin-top:24px;padding:16px;font-size:17px;letter-spacing:1px">
+          START GAME ✈
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       GAME SCREEN
+       ======================================================== -->
+  <div class="screen" id="screen-game">
+
+    <!-- Map (full screen) -->
+    <div id="map"></div>
+
+    <!-- Map loading indicator -->
+    <div id="map-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#080c18;z-index:5;transition:opacity 0.5s">
+      <div style="text-align:center;font-family:'Barlow Condensed',sans-serif;color:#4a5568">
+        <div style="font-size:32px;margin-bottom:12px;animation:pulse 1.5s infinite">✈</div>
+        <div style="font-size:14px;letter-spacing:2px">LOADING MAP...</div>
+      </div>
+    </div>
+
+    <!-- Top bar -->
+    <div id="top-bar">
+      <div id="game-logo">CONTINENTAL</div>
+      <div id="win-condition-badge"></div>
+    </div>
+
+    <!-- Team strip (bottom) -->
+    <div id="team-strip"></div>
+
+    <!-- Action panel (slides up from team strip) -->
+    <div id="action-panel"></div>
+
+    <!-- ======================================================
+         OVERLAYS
+         ====================================================== -->
+
+    <!-- Home city reveal -->
+    <div class="overlay" id="overlay-reveal"></div>
+
+    <!-- Boarding pass -->
+    <div class="overlay" id="overlay-boarding-pass"></div>
+
+    <!-- Flight screen (airline data) -->
+    <div class="overlay" id="overlay-flight" style="align-items:flex-end;padding-bottom:64px"></div>
+
+    <!-- Challenge -->
+    <div class="overlay" id="overlay-challenge"></div>
+
+    <!-- Answer result -->
+    <div class="overlay" id="overlay-result"></div>
+
+    <!-- Arrival -->
+    <div class="overlay" id="overlay-arrival"></div>
+
+    <!-- City dossier -->
+    <div class="overlay" id="overlay-dossier"></div>
+
+    <!-- Flight picker -->
+    <div class="overlay" id="overlay-flight-picker" style="align-items:flex-end"></div>
+
+    <!-- Win screen -->
+    <div class="overlay" id="overlay-win"></div>
+
+  </div><!-- /screen-game -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+  <script src="libs/pmtiles.js"></script>
+  <script src="libs/maplibre-gl.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data/questions.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      GAME.init();
+    });
+  </script>
+
+</body>
+</html>
