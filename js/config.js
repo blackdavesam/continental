@@ -29,9 +29,9 @@ const CONFIG = {
   },
 
   AIRLINE_MODIFIERS: {
-    budget:   { label: 'Budget Air',      modifier: 0,    speed: 480, color: '#6b7280', logoKey: 'DAL' },
-    standard: { label: 'Continental',     modifier: 100,  speed: 530, color: '#3b82f6', logoKey: 'UAL' },
-    premium:  { label: 'Premier Class',   modifier: 300,  speed: 590, color: '#f0a500', logoKey: 'AAL' },
+    delta:    { label: 'Delta Air Lines',   cabin: 'Main Cabin',  modifier: 0,   speed: 480, color: '#9b2226', logoKey: 'DAL' },
+    united:   { label: 'United Airlines',   cabin: 'Economy Plus',modifier: 100, speed: 530, color: '#1e40af', logoKey: 'UAL' },
+    american: { label: 'American Airlines', cabin: 'First Class', modifier: 300, speed: 590, color: '#b91c1c', logoKey: 'AAL' },
   },
 
   // Airline logo data URIs — injected by build.py

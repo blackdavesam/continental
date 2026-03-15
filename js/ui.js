@@ -56,6 +56,7 @@ const UI = {
       div.id = `team-chip-${i}`;
       div.style.setProperty('--team-color', team.color);
       div.innerHTML = `
+        <div class="team-avatar" style="--team-color:${team.color}">${team.name.charAt(0).toUpperCase()}</div>
         <div class="team-chip-name">${team.name}</div>
         <div class="team-chip-cash">$<span id="team-cash-${i}">${team.cash.toLocaleString()}</span></div>
         <div class="team-chip-cities"><span id="team-cities-${i}">${team.cities.size}</span> cities</div>
@@ -249,7 +250,7 @@ const UI = {
         </div>
         <div class="bp-footer">
           <div class="bp-detail"><span>PASSENGER</span><strong>${team.name}</strong></div>
-          <div class="bp-detail"><span>CLASS</span><strong>${flight.airlineKey.toUpperCase()}</strong></div>
+          <div class="bp-detail"><span>CABIN</span><strong>${flight.airline.cabin}</strong></div>
           <div class="bp-detail"><span>GATE</span><strong>${String.fromCharCode(65 + Math.floor(Math.random()*6))}${Math.floor(Math.random()*30)+1}</strong></div>
           <div class="bp-barcode">|||  |||  || |||  ||  ||| ||</div>
         </div>

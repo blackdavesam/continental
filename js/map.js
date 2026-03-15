@@ -8,6 +8,8 @@ const MAP = {
   pins: [],
   flightPaths: [],
   planeMarker: null,
+  cityLabelMarkers: [],   // HTML markers for city names (offline)
+  teamMarkers: {},        // teamId → maplibregl.Marker (current position)
 
   async init() {
     if (this.instance) return;
@@ -21,12 +23,9 @@ const MAP = {
     // Resolve paths relative to the HTML file
     const base = window.location.href.replace(/\/[^/]*$/, '/');
     const pmtilesUrl = base + 'north-america.pmtiles';
-    // Use Protomaps CDN for glyphs — no local font files needed
-    const glyphBase = 'https://protomaps.github.io/basemaps-assets/fonts/';
-
     this.instance = new maplibregl.Map({
       container: 'map',
-      style: this.buildStyle(glyphBase, pmtilesUrl),
+      style: this.buildStyle(pmtilesUrl),
       center: CONFIG.MAP_CENTER,
       zoom: CONFIG.MAP_ZOOM,
       attributionControl: false,
@@ -42,6 +41,9 @@ const MAP = {
       setTimeout(resolve, 8000);
     });
 
+    // Place HTML city-name labels for all 28 game cities (fully offline)
+    this.addCityLabels();
+
     // Hide loading indicator
     const loader = document.getElementById('map-loading');
     if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 500); }
@@ -49,10 +51,41 @@ const MAP = {
     return this;
   },
 
-  buildStyle(glyphBase, pmtilesUrl) {
+  addCityLabels() {
+    CITIES.forEach(city => {
+      const el = document.createElement('div');
+      el.className = 'city-label';
+      el.textContent = city.name;
+      new maplibregl.Marker({ element: el, anchor: 'top' })
+        .setLngLat([city.lng, city.lat])
+        .addTo(this.instance);
+      this.cityLabelMarkers.push(el);
+    });
+  },
+
+  // Place or move a team's current-position avatar on the map.
+  updateTeamMarker(team) {
+    if (!this.instance || !team.currentCity) return;
+    const { lng, lat } = team.currentCity;
+
+    if (this.teamMarkers[team.id]) {
+      this.teamMarkers[team.id].setLngLat([lng, lat]);
+    } else {
+      const el = document.createElement('div');
+      el.className = 'team-map-marker';
+      el.style.background = team.color;
+      el.style.boxShadow = `0 0 10px ${team.color}88`;
+      el.textContent = team.name.charAt(0).toUpperCase();
+      el.title = team.name;
+      this.teamMarkers[team.id] = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([lng, lat])
+        .addTo(this.instance);
+    }
+  },
+
+  buildStyle(pmtilesUrl) {
     return {
       version: 8,
-      glyphs: glyphBase + '{fontstack}/{range}.pbf',
       sources: {
         protomaps: {
           type: 'vector',
@@ -116,26 +149,6 @@ const MAP = {
           paint: {
             'line-color': '#243f5c',
             'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.5]
-          }
-        },
-        {
-          id: 'place-labels',
-          type: 'symbol',
-          source: 'protomaps',
-          'source-layer': 'places',
-          filter: ['in', ['get', 'kind'], ['literal', ['city', 'town']]],
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': ['interpolate', ['linear'], ['zoom'], 3, 10, 6, 12, 9, 14],
-            'text-max-width': 8,
-            'text-anchor': 'top',
-            'text-offset': [0, 0.3],
-          },
-          paint: {
-            'text-color': '#b8d4f0',
-            'text-halo-color': '#071525',
-            'text-halo-width': 1.5,
           }
         },
       ],

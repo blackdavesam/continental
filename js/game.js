@@ -94,6 +94,9 @@ const GAME = {
     this.mapReady = true;
     MAP.flyTo(this.homeCity.lng, this.homeCity.lat, 3.5);
 
+    // Place all team avatars at the home city
+    this.teams.forEach(team => MAP.updateTeamMarker(team));
+
     // Show home city reveal, then start turn
     UI.showHomeCityReveal(this.homeCity);
   },
@@ -215,6 +218,7 @@ const GAME = {
     }
 
     MAP.placePin(city, team);
+    MAP.updateTeamMarker(team);
     this.state = 'arrived';
     UI.showArrival(city, team, isNew, bonus);
     UI.updateTeamStrip();

@@ -183,6 +183,45 @@ html, body {
   cursor: default;
 }
 
+/* ============================================================
+   MAP MARKERS — city labels & team position avatars
+   ============================================================ */
+
+/* City name HTML labels (fully offline, no glyph CDN needed) */
+.city-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: #b8d4f0;
+  text-shadow:
+    0 0 4px #071525,
+    0 1px 3px #071525,
+    0 -1px 3px #071525,
+    1px 0 3px #071525,
+    -1px 0 3px #071525;
+  pointer-events: none;
+  white-space: nowrap;
+  margin-top: 4px;
+}
+
+/* Team current-position avatar on the map */
+.team-map-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: #fff;
+  cursor: default;
+  box-sizing: border-box;
+  transition: transform 0.3s ease;
+}
+
 /* Team strip */
 #team-strip {
   position: absolute;
@@ -214,6 +253,23 @@ html, body {
 }
 
 .team-chip.inactive { opacity: 0.5; }
+
+/* Small avatar circle in the team strip chip */
+.team-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--team-color);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: #fff;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
 
 .team-chip-name {
   font-size: 13px;
@@ -1307,6 +1363,10 @@ html, body {
     <div class="overlay" id="overlay-win"></div>
 
   </div><!-- /screen-game -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
 
   <!-- ========================================================
        SCRIPTS — libs first, then game modules
@@ -3161,9 +3221,9 @@ const CONFIG = {
   },
 
   AIRLINE_MODIFIERS: {
-    budget:   { label: 'Budget Air',      modifier: 0,    speed: 480, color: '#6b7280', logoKey: 'DAL' },
-    standard: { label: 'Continental',     modifier: 100,  speed: 530, color: '#3b82f6', logoKey: 'UAL' },
-    premium:  { label: 'Premier Class',   modifier: 300,  speed: 590, color: '#f0a500', logoKey: 'AAL' },
+    delta:    { label: 'Delta Air Lines',   cabin: 'Main Cabin',  modifier: 0,   speed: 480, color: '#9b2226', logoKey: 'DAL' },
+    united:   { label: 'United Airlines',   cabin: 'Economy Plus',modifier: 100, speed: 530, color: '#1e40af', logoKey: 'UAL' },
+    american: { label: 'American Airlines', cabin: 'First Class', modifier: 300, speed: 590, color: '#b91c1c', logoKey: 'AAL' },
   },
 
   // Airline logo data URIs — injected by build.py
@@ -3442,6 +3502,8 @@ const MAP = {
   pins: [],
   flightPaths: [],
   planeMarker: null,
+  cityLabelMarkers: [],   // HTML markers for city names (offline)
+  teamMarkers: {},        // teamId → maplibregl.Marker (current position)
 
   async init() {
     if (this.instance) return;
@@ -3455,12 +3517,9 @@ const MAP = {
     // Resolve paths relative to the HTML file
     const base = window.location.href.replace(/\/[^/]*$/, '/');
     const pmtilesUrl = base + 'north-america.pmtiles';
-    // Use Protomaps CDN for glyphs — no local font files needed
-    const glyphBase = 'https://protomaps.github.io/basemaps-assets/fonts/';
-
     this.instance = new maplibregl.Map({
       container: 'map',
-      style: this.buildStyle(glyphBase, pmtilesUrl),
+      style: this.buildStyle(pmtilesUrl),
       center: CONFIG.MAP_CENTER,
       zoom: CONFIG.MAP_ZOOM,
       attributionControl: false,
@@ -3476,6 +3535,9 @@ const MAP = {
       setTimeout(resolve, 8000);
     });
 
+    // Place HTML city-name labels for all 28 game cities (fully offline)
+    this.addCityLabels();
+
     // Hide loading indicator
     const loader = document.getElementById('map-loading');
     if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 500); }
@@ -3483,10 +3545,41 @@ const MAP = {
     return this;
   },
 
-  buildStyle(glyphBase, pmtilesUrl) {
+  addCityLabels() {
+    CITIES.forEach(city => {
+      const el = document.createElement('div');
+      el.className = 'city-label';
+      el.textContent = city.name;
+      new maplibregl.Marker({ element: el, anchor: 'top' })
+        .setLngLat([city.lng, city.lat])
+        .addTo(this.instance);
+      this.cityLabelMarkers.push(el);
+    });
+  },
+
+  // Place or move a team's current-position avatar on the map.
+  updateTeamMarker(team) {
+    if (!this.instance || !team.currentCity) return;
+    const { lng, lat } = team.currentCity;
+
+    if (this.teamMarkers[team.id]) {
+      this.teamMarkers[team.id].setLngLat([lng, lat]);
+    } else {
+      const el = document.createElement('div');
+      el.className = 'team-map-marker';
+      el.style.background = team.color;
+      el.style.boxShadow = `0 0 10px ${team.color}88`;
+      el.textContent = team.name.charAt(0).toUpperCase();
+      el.title = team.name;
+      this.teamMarkers[team.id] = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([lng, lat])
+        .addTo(this.instance);
+    }
+  },
+
+  buildStyle(pmtilesUrl) {
     return {
       version: 8,
-      glyphs: glyphBase + '{fontstack}/{range}.pbf',
       sources: {
         protomaps: {
           type: 'vector',
@@ -3550,26 +3643,6 @@ const MAP = {
           paint: {
             'line-color': '#243f5c',
             'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.5]
-          }
-        },
-        {
-          id: 'place-labels',
-          type: 'symbol',
-          source: 'protomaps',
-          'source-layer': 'places',
-          filter: ['in', ['get', 'kind'], ['literal', ['city', 'town']]],
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': ['interpolate', ['linear'], ['zoom'], 3, 10, 6, 12, 9, 14],
-            'text-max-width': 8,
-            'text-anchor': 'top',
-            'text-offset': [0, 0.3],
-          },
-          paint: {
-            'text-color': '#b8d4f0',
-            'text-halo-color': '#071525',
-            'text-halo-width': 1.5,
           }
         },
       ],
@@ -3824,6 +3897,7 @@ const UI = {
       div.id = `team-chip-${i}`;
       div.style.setProperty('--team-color', team.color);
       div.innerHTML = `
+        <div class="team-avatar" style="--team-color:${team.color}">${team.name.charAt(0).toUpperCase()}</div>
         <div class="team-chip-name">${team.name}</div>
         <div class="team-chip-cash">$<span id="team-cash-${i}">${team.cash.toLocaleString()}</span></div>
         <div class="team-chip-cities"><span id="team-cities-${i}">${team.cities.size}</span> cities</div>
@@ -4017,7 +4091,7 @@ const UI = {
         </div>
         <div class="bp-footer">
           <div class="bp-detail"><span>PASSENGER</span><strong>${team.name}</strong></div>
-          <div class="bp-detail"><span>CLASS</span><strong>${flight.airlineKey.toUpperCase()}</strong></div>
+          <div class="bp-detail"><span>CABIN</span><strong>${flight.airline.cabin}</strong></div>
           <div class="bp-detail"><span>GATE</span><strong>${String.fromCharCode(65 + Math.floor(Math.random()*6))}${Math.floor(Math.random()*30)+1}</strong></div>
           <div class="bp-barcode">|||  |||  || |||  ||  ||| ||</div>
         </div>
@@ -4414,6 +4488,9 @@ const GAME = {
     this.mapReady = true;
     MAP.flyTo(this.homeCity.lng, this.homeCity.lat, 3.5);
 
+    // Place all team avatars at the home city
+    this.teams.forEach(team => MAP.updateTeamMarker(team));
+
     // Show home city reveal, then start turn
     UI.showHomeCityReveal(this.homeCity);
   },
@@ -4535,6 +4612,7 @@ const GAME = {
     }
 
     MAP.placePin(city, team);
+    MAP.updateTeamMarker(team);
     this.state = 'arrived';
     UI.showArrival(city, team, isNew, bonus);
     UI.updateTeamStrip();
