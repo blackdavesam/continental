@@ -1,5 +1,5 @@
 /* ============================================================
-   CONTINENTAL — style.css
+   CONTINENTAL DRIFT — style.css
    Flight simulator meets strategy game
    ============================================================ */
 
@@ -62,8 +62,8 @@ html, body {
 
 .setup-logo {
   font-family: var(--font-display);
-  font-size: 52px;
-  letter-spacing: 4px;
+  font-size: 42px;
+  letter-spacing: 3px;
   color: var(--gold);
   text-align: center;
   margin-bottom: 4px;
@@ -151,10 +151,11 @@ html, body {
 
 #game-logo {
   font-family: var(--font-display);
-  font-size: 24px;
-  letter-spacing: 2px;
+  font-size: 22px;
+  letter-spacing: 1px;
   color: var(--gold);
   pointer-events: auto;
+  white-space: nowrap;
 }
 
 #win-condition-badge {
