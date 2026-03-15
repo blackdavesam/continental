@@ -307,6 +307,22 @@ html, body {
 .action-btn.used { opacity: 0.4; cursor: not-allowed; }
 .action-btn.used:hover { background: var(--bg3); transform: none; border-color: var(--border); }
 
+.btn-end-turn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.btn-end-turn:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+
 .action-icon { font-size: 20px; }
 
 .action-label {
@@ -347,6 +363,32 @@ html, body {
 .overlay:not(.transparent) {
   background: rgba(8,12,24,0.75);
   backdrop-filter: blur(4px);
+}
+
+/* Bullseye mode: overlay passes all clicks through to the map canvas;
+   only the challenge card itself stays interactive */
+.overlay.transparent {
+  pointer-events: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 24px;
+}
+.overlay.transparent .challenge-card {
+  pointer-events: auto;
+  max-width: min(90vw, 560px);
+}
+
+/* Flight overlay: no blur so map animation is fully visible */
+#overlay-flight {
+  background: none !important;
+  backdrop-filter: none !important;
+  pointer-events: none;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 0 16px 72px 16px;
+}
+#overlay-flight .flight-screen {
+  pointer-events: auto;
 }
 
 /* ============================================================
@@ -421,6 +463,21 @@ html, body {
   font-size: 22px;
   letter-spacing: 2px;
   color: var(--gold);
+}
+
+.bp-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);  /* white logo on dark header */
+}
+
+.fs-logo {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
 }
 
 .bp-flight-num {
@@ -1249,6 +1306,10 @@ html, body {
     <div class="overlay" id="overlay-win"></div>
 
   </div><!-- /screen-game -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
 
   <!-- ========================================================
        SCRIPTS — libs first, then game modules
@@ -3095,10 +3156,13 @@ const CONFIG = {
   },
 
   AIRLINE_MODIFIERS: {
-    budget:   { label: 'Budget Air',      modifier: 0,    speed: 480, color: '#6b7280' },
-    standard: { label: 'Continental',     modifier: 100,  speed: 530, color: '#3b82f6' },
-    premium:  { label: 'Premier Class',   modifier: 300,  speed: 590, color: '#f0a500' },
+    budget:   { label: 'Budget Air',      modifier: 0,    speed: 480, color: '#6b7280', logoKey: 'DAL' },
+    standard: { label: 'Continental',     modifier: 100,  speed: 530, color: '#3b82f6', logoKey: 'UAL' },
+    premium:  { label: 'Premier Class',   modifier: 300,  speed: 590, color: '#f0a500', logoKey: 'AAL' },
   },
+
+  // Airline logo data URIs — injected by build.py
+  AIRLINE_LOGOS: {},
 
   // --- FLIGHT ANIMATION ---
   FLIGHT_DURATION_MS: 6000,      // base duration, modified by airline speed
@@ -3550,19 +3614,58 @@ const MAP = {
     this.pins.push({ city, team, el });
   },
 
+  // Compute a great-circle (geodesic) path — east-west flights curve
+  // toward the poles, matching how real airline routes look on a map.
+  greatCirclePoints(origin, destination, steps) {
+    const toRad = d => d * Math.PI / 180;
+    const toDeg = r => r * 180 / Math.PI;
+    const lat1 = toRad(origin.lat),  lng1 = toRad(origin.lng);
+    const lat2 = toRad(destination.lat), lng2 = toRad(destination.lng);
+
+    const d = 2 * Math.asin(Math.sqrt(
+      Math.sin((lat2 - lat1) / 2) ** 2 +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin((lng2 - lng1) / 2) ** 2
+    ));
+    if (d < 0.0001) return [[origin.lng, origin.lat], [destination.lng, destination.lat]];
+
+    const pts = [];
+    for (let i = 0; i <= steps; i++) {
+      const f = i / steps;
+      const A = Math.sin((1 - f) * d) / Math.sin(d);
+      const B = Math.sin(f * d) / Math.sin(d);
+      const x = A * Math.cos(lat1) * Math.cos(lng1) + B * Math.cos(lat2) * Math.cos(lng2);
+      const y = A * Math.cos(lat1) * Math.sin(lng1) + B * Math.cos(lat2) * Math.sin(lng2);
+      const z = A * Math.sin(lat1) + B * Math.sin(lat2);
+      pts.push([toDeg(Math.atan2(y, x)), toDeg(Math.atan2(z, Math.sqrt(x * x + y * y)))]);
+    }
+    return pts;
+  },
+
+  // True compass bearing from p1→p2 ([lng,lat] pairs).
+  bearingBetween(p1, p2) {
+    const toRad = d => d * Math.PI / 180;
+    const toDeg = r => r * 180 / Math.PI;
+    const dLng = toRad(p2[0] - p1[0]);
+    const lat1 = toRad(p1[1]), lat2 = toRad(p2[1]);
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    return toDeg(Math.atan2(y, x));
+  },
+
   animateFlight(flight, onComplete) {
     const { origin, destination, airline } = flight;
     const map = this.instance;
 
-    // Fit both cities in view first
     this.fitBounds([origin, destination]);
 
-    const pathId = 'flight-path-' + Date.now();
+    // Pre-compute full geodesic path (no parabola — real great-circle arc)
+    const steps = 120;
+    const gcPath = this.greatCirclePoints(origin, destination, steps);
 
-    // Add dashed path source
+    const pathId = 'flight-path-' + Date.now();
     map.addSource(pathId, {
       type: 'geojson',
-      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [[origin.lng, origin.lat]] } }
+      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [gcPath[0]] } }
     });
     map.addLayer({
       id: pathId,
@@ -3572,11 +3675,10 @@ const MAP = {
         'line-color': '#f0a500',
         'line-width': 2,
         'line-dasharray': [4, 4],
-        'line-opacity': 0.6,
+        'line-opacity': 0.8,
       }
     });
 
-    // Plane marker
     const planeEl = document.createElement('div');
     planeEl.textContent = '✈';
     planeEl.style.cssText = `
@@ -3590,41 +3692,28 @@ const MAP = {
 
     if (this.planeMarker) this.planeMarker.remove();
     this.planeMarker = new maplibregl.Marker({ element: planeEl, anchor: 'center' })
-      .setLngLat([origin.lng, origin.lat])
+      .setLngLat(gcPath[0])
       .addTo(map);
 
-    const steps = 120;
     const duration = CONFIG.FLIGHT_DURATION_MS * (530 / airline.speed);
-    const coords = [[origin.lng, origin.lat]];
     let step = 0;
 
     const interval = setInterval(() => {
       step++;
+      const pos = gcPath[Math.min(step, gcPath.length - 1)];
       const t = step / steps;
-
-      const lng = origin.lng + (destination.lng - origin.lng) * t;
-      const baseLat = origin.lat + (destination.lat - origin.lat) * t;
-      const arcLift = Math.sin(t * Math.PI) * CONFIG.FLIGHT_ARC_HEIGHT * 12;
-      const lat = baseLat + arcLift;
-
-      coords.push([lng, lat]);
 
       map.getSource(pathId)?.setData({
         type: 'Feature',
-        geometry: { type: 'LineString', coordinates: coords }
+        geometry: { type: 'LineString', coordinates: gcPath.slice(0, step + 1) }
       });
 
-      // Rotate plane to face direction of travel
-      if (coords.length >= 2) {
-        const prev = coords[coords.length - 2];
-        const curr = coords[coords.length - 1];
-        const angle = Math.atan2(curr[0] - prev[0], curr[1] - prev[1]) * 180 / Math.PI;
-        planeEl.style.transform = `rotate(${angle}deg)`;
+      if (step > 0) {
+        const bearing = this.bearingBetween(gcPath[step - 1], pos);
+        planeEl.style.transform = `rotate(${bearing}deg)`;
       }
+      this.planeMarker.setLngLat(pos);
 
-      this.planeMarker.setLngLat([lng, lat]);
-
-      // Update flight overlay stats
       const distLeft = Math.round(flight.distanceMiles * (1 - t));
       const altitude = Math.round(Math.sin(t * Math.PI) * 35000);
       const speed = t < 0.05  ? Math.round(airline.speed * (t / 0.05))
@@ -3809,6 +3898,9 @@ const UI = {
           <span class="action-sub">Spend Flight Points</span>
         </button>
       </div>
+      <button class="btn-end-turn" onclick="UI.hideActionPanel(); GAME.nextTurn()">
+        End Turn →
+      </button>
     `;
     panel.classList.add('active');
   },
@@ -3896,7 +3988,9 @@ const UI = {
     overlay.innerHTML = `
       <div class="boarding-pass" style="--team-color:${team.color}">
         <div class="bp-header">
-          <div class="bp-airline">${flight.airline.label}</div>
+          ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
+            ? `<img class="bp-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+            : `<div class="bp-airline">${flight.airline.label}</div>`}
           <div class="bp-flight-num">Flight ${flight.flightNumber}</div>
         </div>
         <div class="bp-route">
@@ -3940,7 +4034,9 @@ const UI = {
     overlay.innerHTML = `
       <div class="flight-screen">
         <div class="fs-header">
-          <span class="fs-airline">${flight.airline.label}</span>
+          ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
+            ? `<img class="fs-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+            : `<span class="fs-airline">${flight.airline.label}</span>`}
           <span class="fs-flight">${flight.flightNumber}</span>
           <span class="fs-route">${flight.origin.airport} → ${flight.destination.airport}</span>
         </div>
@@ -4049,7 +4145,10 @@ const UI = {
     if (q.type === 'bullseye') {
       overlay.classList.add('transparent');
       const target = CITIES.find(c => c.id === q.targetCity);
+      // Start a 25 s timer so the game can't get permanently stuck
+      this.startChallengeTimer(25);
       MAP.enableBullseye(target, (lngLat) => {
+        clearInterval(this._timerInterval);   // cancel timer on successful click
         overlay.classList.remove('transparent');
         GAME.answerChallenge(lngLat);
       });
@@ -4475,6 +4574,13 @@ const GAME = {
   getFlightCost(origin, destination, airlineKey) {
     return getFlightCost(origin, destination, airlineKey);
   },
+};
+  </script>
+  <script>
+CONFIG.AIRLINE_LOGOS = {
+  DAL: "data:image/png;base64,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",
+  UAL: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAABaCAMAAAAPdrEwAAADAFBMVEUUFNH///8UFNITE9ETE9ETE9AODtAICM/7+/4fH9QEBM8UFNIKCtD29v3q6vsAAM0qKtZnZ+L8/P+srO/V1ffw8PzQ0Pa6uvHg4PgxMdcYGNL///8QENFISNwSEtF5eeWuru+wsPDGxvQdHdQ5OdkMDNAaGtIJCdC0tPCKiuj09PwGBs/i4vkuLtcmJtVaWt8UFNHk5PmPj+mZmexQUN5ra+OFhej5+f0aGtM+PtqXl+s8PNl8fOXj4/q4uPG+vvLr6/ukpO3b2/gkJNVqauJkZOFOTt1GRtspKdby8vzLy/WIiOgzM9iMjOnExPNubuPAwPNSUt7m5vpDQ9vNzfXS0vY3N9j9/f+AgOd9febv7/sWFtJVVd7y8vzY2PdWVt6dnexzc+Sfn+11deSmpu5LS9z///81Ndj///+SkulBQdqSkuqDg+fU1PYeHtRYWN/l5foWFtLp6ftiYuFwcOMcHNO2tvEsLNZfX+ACAs7e3vhCQtrZ2fg7O9m8vPOUlOv39/0hIdQVFdQtLdbt7fuiou39/f9cXOBxceTo6PooKNX///+pqe7Dw/Obm+wVFdFhYeEHB8+ysvAUFNLJyfTX1/f9/f8FBc8QENEdHdPCwvN2duUMDNBBQdvHx/QUFNIzM9gVFdsCAs75+f3Pz/bZ2fjs7PsUFNsUFNISEtAiItQyMtctLdZKStuEhOgSEtI4ONh7e+YmJtU3N9kaGtMnJ9XOzvUyMtgNDdEHB9nw8PzY2PcaGtM4ONhDQ9soKNUcHNIUFNL///8VFdsYGNP+/v8VFdIBAc/9/f/8/P/7+/8GBtADA88WFtIXF9MXF9IAAM4EBM8SEtIZGdMNDdH9/f8aGtQWFtP7+/4JCdAAAM0VFdwICNAODtEREdIKCtALC9EPD9ETE9IMDNEQENL5+f74+P34+P4YGN0cHNQKCtEICNoPD9sVFdMMDNsVFdkWFuUbG90rK99zc+wFBdrGxvtpaekWFtx4eOwZGeYEBNjc3P8EBNlsbOtAQOJCQuKKifriAAAAwXRSTlP9/ry3rbb+/v/+/v3+/v7+/f3+/f3+/f39/f79/v3+/f39/f79/v7+/fz+//39/v3+/v39/v38/v/9/f39/v39/v39/f39/f39/v38/f39/f39/v3+/v22/fz+/v3+/v38/f38/P2t/fz9/fz9/f79/v3+/f3+/f39/f39/v39/f79tv3+/f79/f3+tv38/f79rf20/f2t/f2s/fy2/P37/P22trKsrLx9hf60+6yw+/2w/fq1+/yr+v2stP20+qv6LCbFagAAEc9JREFUeJztWXlUU1ma9/Z0JQ0dZUeWYEAJSBJKRSEBbERWj6AIWi4g5d6ugBuocQNlEUXLobBxtEqru2p6sXt6bHra2ZglX7338p55WV6SI0kqC1ug1Krq7qrprll6lnNfFqC0HLtn6p85c//JOXn3/t53f9/vW+59s374g699JeMHP5r15q9++f5XMH75q6/N+vp37876Csbd774y6+sf3NV8BWPW+3/0/9D/F6EpSq83Gg1Go15PUf9b0JSRIIY0btew3anTOe0e64iZMhAGPfU/g9YbDBqXjuVEi+9lpq7fU7ZsT3l+5asJAjnLDZuHiD8Enof+fJCycty8zK3Ld664cVSJwDdQrbovec2x/OZ01m42GKg/BPqTfkFl9sroVh8mqlldkJxyrk892/+Gwy2by9M4nZsw/v7Q/1HRh2FI75z524/vOZtfXpYUf1OcEL5n81oE5ASGV3csauTsFEH9ftB/Cvv89rV3ZG/pmd+XsmVPcTonTxfdFKzKm93Zk7WuHgAU25MEnPnlwTH0t0HRsv/Q7YhFx3JWFCJ4sDHMUZdbsr83VhETd1y0Khm1bImQ9BwFQHey01j3y4Jj6J/+Z/HeRQMO4dZj8aHizJw5KGptDE87krW3JxeHRSCoXZhRunw+AlBvaeRGiZeG/uPrMbXHj2S3J64o58SrwgRZCJR3ejZfL997ubEu5J5Klxqn3LJteddP9kRNACgkddyQ/iWh34OWWeGxiVHhYQmXVqPo/LCk7vokh06rZVmO02o5jynzcO1Gx2jjWHrq7kiAMyfTx4iX5PqzUxWJt+LDwvNkgPqy3iZ0+TExqYLiytPLukqzq7IjmkxnW9tL975h17HcnlgAVFDJUvqXEt+nRYXLwsJ7EFJXnJU6TPLFpi7oji1sRciv9F2OEoBIdfKu/DqHMA95QSaRWomXgP5Z98FTgysRatkqdjjmpWavvJPpSIbpQ7nR0UvS+CUNB3PDLqFJgBXhHPEShJz5x5zExKXxDkdz9flYHCEtXKqSORp3piH2QWxDkaJ74pw9XkYDYHi0Yt4ukClhThf7Ym9i6O/DN2QVg2HirR1LsImt6nV5zfIVcF1UJxYIBOLFCW0nchdot0PcA5wKaLgT1vPwfBGgjHS38b+B/pOoxFhh/PkanD4KKhZVponkFm4HXOMeEYTBoNeMul0eaji1U30kvCvvtUiA5cLChvBegJRvvohwXtcfPQA1QrK5W5LapHLn2Lh7ZMSzHhpOcXKdfWzETBEWldEgXQ2LtHZOfF9ytXVgEdwZyEGwum2YeLHVT8tISO4aEJpMWs4uqAsJ31tpDZ+Q7Yq4vjUpNbxZLGQ5nYbNIXfKHxOaMS59/dv9G6Dw/kkEReF24sWl4M9fp1Md8oT4sqqsqPlFc+ojG6Qhc3jZISSrea1g6e3qy/JlEC0yE4SRGPK4ddcB0Nb1raDI/FJsHvrD/iiIOlRQVO8vAjTzmqC5Bia9NoYMlIWlpnilcludnBsxGIz60bqa9u2o6p16UFx8QrwQeukMGQNEC+/xVgNjs9kYxjZBJ7ONSwApekoHhJybULH7ydOVZyTvxIC62Gp8EfQ1iFuYvPLawYxDkl2XqrIvdXnCZ9Orz9T6wpFkvPRC3eJoYAAgZmFpCOeyJ0GPQ5DR9LYMYo+49S+AToasMJdTzgXG8HAuxDQKilOblq9c3Y7xe+Xi1cDQDEavyTtrba7tHjRzuTerlTBX9Nyuwu/GaLjuGLYPu9wUoVKpVBYVdwzO1I26x3QsJ2hbv2OlukMu7gMvQwKJ0Tu7HOsg12WxEqYcgDyW+NKy+/OH5G7JpevVuZlt89I5Vme1sPuhJd1A6Q0EQY17OK7u3qgglicfx3srHHQcJEscBKH5WBBLo4jn5RNe17/LAa9PahOFr6/o2LIo3izog+XaR77+g9ITxKhb80YRtBQosX5IG9njOA6KEukTgtCVIVJWOWz8kj4kjlfDQy8mEr+iwrR3Am4fEbGeQP9B6cfbjsLJsL2bGxDABHnOsQ0BuprPUhbhLRJixRrquYH+7/seVi2fW4O9xXi9Xm/rRpMEbGjO3M3r0zjONUToNRr92P2HsM0+zs4rS24FuGUqRzQDykOCcU8XeGGNlnge9D98K3GFiRMuKN9S0I1w5ixwijfwQgOkiIq4KOKsQ5RBtwgiU4cJQuPsj8+KaQg7iwDPWXuCS1MAaTtgNz63D5Gluh4b3HZWGLKnYm09qsYmYTnbcDDKbkni08ctbAV0t7kpjcZosJoulg6/0wk0kDYo3OroSLwBGwTU80oBWfSO0KknjASGF2U2Wbgo8CnY/zNxbpVZdA5W+5frCZfHureTt5qBxPhqlNEOu76oQAz9HdgX2btHKtcQFGUkhlx2a+UEKDHxfAYhGS/Ut1mLCyHL8ci/a8oynI9ktUCT4IXjR1BeDhy9N049azUTCYDmn1zsa7uoR9xKqD1bcgeTiQsi2MilnGcRogsqhfYhH7jRngRFJ6IQMDZyadhhRVs3nP+C2Rj6byCSZkhA0ccHObNeY/TkKyHP5JSe3l7IqxhoVG6VrwQbRKYkiZxDBo1Gg73aIO0/VgiTUBDWghbchvpMl/6ZkFm6DxigGQC1ZNCjHxKugJjwEQvl4Yp3xCIAL7lBMBpS6Cu655aJdENGDcHehnVSC3f5HJB9YfvJKmkNXJtpNh8yv2uqwbxi8JpqlzwCQQaepSfGOXFZihIgwuksxT4j8eauVovsFMHmQQ9nIFyiHFQUJoFuqQTqT7ioZzNfWwrCS21Me+WT4m4yboHZF4ME5RRWbn+Q8LHoqk/omH20IsllSJ8LFSyh0Q+ZSqPlEQCSm+2wZobZvsw3OCKsqgcbydiSdMJeQBEOSyAAjIZheR3lOdAZLDg0DWgXt0ABERxmndBljnUh8rBwPxxu9lk0Hfqu3sDGrwUaZTt1l8BGnomQ2oNttN4wSnBR2OBADfJChCk3Eh0Y491mMOu2IS9sW6WEGRmQzyGf39VoiDFpRmSOfCy3FZuH1q7nRoLTjGMblWRhO5A+cBLqV2mrYE7CEwv/mNAtQl66IGwtuU40NBP6zz7C50bjqDx/8UijGvgQB7RzgKX8rPBG7wpZiXxBxJBzh+VR4O0d4PitGbiTQIKsbgcoN/o2MhUyn53Cr6cMVo3gFth8hJJQuEvs5JcaPQciyZrmsf71t3hnM1DFLlgCNHQvYjV6/OYSSGmAZZmdcGiaI3lo+u91+B+K6O/BqD5CGYDVSRwO3qH0qwC3WQthl0YoAGwQc5krQzQwgA4KXISGYCWwOR6dFyqCWWYqhxSGO40aauhUHjDttX67eVa2t7kpgitFZNHiUY3GOMQ1nu8Euscpz8OzSAauFjsJgt0POY41DWEFoNw7xYgv8yWqL4/rh9gs8CrLwxuAz6U+mSlCRs0Lakh00ud7ws2+3YeSnGkK3+ZsoMjlLP0pUKIzHxSvAbg0pRHeajpxyf0RQ2gWeNExznUkCmPywwZr7Cq2A2Bdut/1FOFcfL1Z14SCtM1uss6LhWon1SwqwT2FYYbVkLLA+rFwKUyiHVrCaO7fwnsLr1snJDDMRO5wcJ9Gjc4g7yW9QY2vY1+NQfeHjXrdMgRL0oJRw7fum/s14+Io8KItJgIrRVtdiKmkYUmb2xxSQ8N2x6Mp91AWa3xrMIBs5HJHORSGuCnjcC4i0ZQRviZ40F48H7wox+TbjUV3MRZsND1x2qkKXQg2uqZKOD6lKoLNgtlqrE/sbLTesQPWCiiN3hpvoyE7SDYf6L8+tV4Bk7DS8SiwePibyfAQlbKNWgkvGJTcpgtEPuVum0OunrUT4SRLgzqB2w09JouGcoXPJqdlVj7Qn95WAkPS3Qecgb+NZmFG4mbTY13SQxyAJAOKssBRkWA3A1RphcdtwIANrrEJapBt4whqZFU9wNVgrGPov0zZh6VEQ/eqsYB/9RpPkttgHej2RxADKMN3VKTczTX0krRRQps0B2w0qjadRiTExA8TrnAZgCJhlJoeMl6eNgaiE8YDTqD0HqN5Xmww3dE03FqFsyihzQHYzBLYIw3AxKVpN4ONgYbFGldlZCvZGqwHPDTjvw+xwQrpVINFUOktvl4w8LSwWj5EjQzU0nNCcENCDA+egzWc4A5PTEfo2Gl4UI9Oe/TTde2zGq/eHRqgihoK3QneQEbxk7JDp2J3+ozGKW9E3JHPblSSJIANlZqaYOe3oElnmNY9LasIqhQqsLT5PMgeBC8UTsMmbQ+rrWMHHtLBuNCbRQb2EK8hG5nikMDtG1Pq48X39K6aP4HjGahKi99KGcIyYBJaBnsD2cr3Xou0D6AqqF1KT4lv8GttIHHshLINsDygPp+u+7civ9kkY6v26DEbFWgS+ha7REuRvyoyMF9kYSUA6wRTtcToLEOYDxw6pjuQ2edrBoLQHyRwyQFKvBDT6DZ+HLoGJqFh0EVQoYcQH3c02b5qfCSznoG8sKlzv4FLIZVA4qRQl1BbOOsO7J8JfRe7nbfNBt1l48QozlVwo81qGKUMpmzE96Rom06Vfgt3C9tFZn9p01vjZ0P2QmAYMspxADUI58PSL0AT7A5sNk3CusucxSWOwsjFvmsgQrtNBowNckyPsYQxM73zRnwyINjzoJiXpsZF3rELlPHnnoHWDEn78HJUIbU+todcBS/EtgUumCzcgUKAqH6Vc72S590Gawf5h9TIQDsckltTZUzMZTYFoHru1HEsAG18kq+k4UwSq1exqdiI+YNTFxIWXeaSDQLKPMiXex77tWIPgTeUBYXFIyr2GCRzjTWA8q8+wzWedRAdTNCpKO3JevDCDcH4tAME4TwxYCWEBcGwt4H6os5AjayqhSyW0BCm3RGOagSy8Fi+XZsJTY3fS+LMj8fwLR8NdOuUdnmNjYyrTBlTEgcGDudaVex2aB8YoTTU6BvNbB5AUWMcSJ6B1lBmj4VgM9fyKZ4E1MT5eiN/bKi0pShQjn0i7fK4Ulv9RlIac10cwNzmGH8nOPPWnVK5hCUxwRZHdoBvToJ0l08wfGwEGNlpUgnnwpIFOFFpNAZnNfJC1gCCat0z0AaKDe/111u+0ek+MXX7Q9jj20nAVAWeqhP0upMIjvt5w72bF7pyUefZQHGcutB3Cna1Q+C8y7N5pnkk0PSNFccBM/t0in9PJBNZbqfSFMGYxxUm8iE6cQzaXw2clnzQR4jh/j2rMYEwfc9rxWZfm2tdEA1e1GUSt/iwbXBI+9i0HSAlNBA6W2B3S6swC6LnzTwVCELPJiMMHNU71UWDDVJCcTUyWNNiYRJJtCqzgMe2QYFQpStDDANrfDl4tE4Np0v6wubCwmCPw5fdf/r5bhswXojZEZq2JJBeeRV0SPUawpq2ASbhYCih0ZsFC3G1Ug+aRwfjgAYGRbAWX69aJDpbIlJPO3Tw/fXObwDpBZRykVXplgVyKPYVWirWEMMhsdAKHf1DFM790oXA1N/3qE7t5s9N9MRprIh5N0DCNov3KqFrhtXfhn2TADeahFYcV+cDgWEDWYRJY3Fefh1aIVnkK5p6s7QXNXGPtSWIn0bDkuJxC5cNR9vcBFcKrfHW6d3Tdyb3wRzJGzqDHmtf/BovMZKB6FSWsHAbFdAKvdJR/wr9SPNWu8qzV+ZLwtgh/UMJPBEE1wENQS/6rY5ZU8yO+jZifJKKTzMMoI46u4XQ7sFBlCL1SYXHHrUT7robwQ4fRYxxhyAm3KUffaMIds5sgr9/7RfsePDAZdFKsLzbj4WaLRSb/RBszO5pyPhT2VB/UEgMFPSPn6jFqVTvOd0JJwNh7m8n//qvEqZ9OD6Sfi5x39zw/iMJUmHWvk5bZ/ddUcL078FHTmXsU3Z2JiYmJtoS68Nv9icnyn4imJVwKicx5hc3Z3w2fuVfZnzs/vyjT2M/e/rRh59/9OlvfKb95tfvfz7t+Sf/PJWl4LdPP/ktwPl//fD9D97/Nzj39MMZH7t/eOHNV6aPN99683v4r79478q7m65suvLulZ9+70Lw6YW3fvzuJvz3pk2bNl15760Lr/ztpnd//NaFV976u3ev/GzaxDcv/Oi/AFxBzu0dzKvjAAAAAElFTkSuQmCC",
+  AAL: "data:image/png;base64,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"
 };
   </script>
   <script>

@@ -29,10 +29,13 @@ const CONFIG = {
   },
 
   AIRLINE_MODIFIERS: {
-    budget:   { label: 'Budget Air',      modifier: 0,    speed: 480, color: '#6b7280' },
-    standard: { label: 'Continental',     modifier: 100,  speed: 530, color: '#3b82f6' },
-    premium:  { label: 'Premier Class',   modifier: 300,  speed: 590, color: '#f0a500' },
+    budget:   { label: 'Budget Air',      modifier: 0,    speed: 480, color: '#6b7280', logoKey: 'DAL' },
+    standard: { label: 'Continental',     modifier: 100,  speed: 530, color: '#3b82f6', logoKey: 'UAL' },
+    premium:  { label: 'Premier Class',   modifier: 300,  speed: 590, color: '#f0a500', logoKey: 'AAL' },
   },
+
+  // Airline logo data URIs — injected by build.py
+  AIRLINE_LOGOS: {},
 
   // --- FLIGHT ANIMATION ---
   FLIGHT_DURATION_MS: 6000,      // base duration, modified by airline speed

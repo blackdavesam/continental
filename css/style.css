@@ -297,6 +297,22 @@ html, body {
 .action-btn.used { opacity: 0.4; cursor: not-allowed; }
 .action-btn.used:hover { background: var(--bg3); transform: none; border-color: var(--border); }
 
+.btn-end-turn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.btn-end-turn:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+
 .action-icon { font-size: 20px; }
 
 .action-label {
@@ -337,6 +353,32 @@ html, body {
 .overlay:not(.transparent) {
   background: rgba(8,12,24,0.75);
   backdrop-filter: blur(4px);
+}
+
+/* Bullseye mode: overlay passes all clicks through to the map canvas;
+   only the challenge card itself stays interactive */
+.overlay.transparent {
+  pointer-events: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 24px;
+}
+.overlay.transparent .challenge-card {
+  pointer-events: auto;
+  max-width: min(90vw, 560px);
+}
+
+/* Flight overlay: no blur so map animation is fully visible */
+#overlay-flight {
+  background: none !important;
+  backdrop-filter: none !important;
+  pointer-events: none;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 0 16px 72px 16px;
+}
+#overlay-flight .flight-screen {
+  pointer-events: auto;
 }
 
 /* ============================================================
@@ -411,6 +453,21 @@ html, body {
   font-size: 22px;
   letter-spacing: 2px;
   color: var(--gold);
+}
+
+.bp-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);  /* white logo on dark header */
+}
+
+.fs-logo {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
 }
 
 .bp-flight-num {

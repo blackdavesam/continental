@@ -18,11 +18,35 @@ Run:
   python3 build.py
 """
 
+import base64
 import os
 import re
 
 OUTPUT = 'CONTINENTAL.html'
 BASE = os.path.dirname(os.path.abspath(__file__))
+
+# Airline logo PNGs to embed as base64 data URIs.
+# key = logoKey used in CONFIG.AIRLINE_MODIFIERS
+AIRLINE_LOGO_FILES = {
+    'DAL': 'airline-logos-main/flightaware_logos/DAL.png',
+    'UAL': 'airline-logos-main/flightaware_logos/UAL.png',
+    'AAL': 'airline-logos-main/flightaware_logos/AAL.png',
+}
+
+
+def airline_logos_js():
+    """Return a JS snippet that populates CONFIG.AIRLINE_LOGOS with base64 data URIs."""
+    entries = []
+    for key, rel_path in AIRLINE_LOGO_FILES.items():
+        full = os.path.join(BASE, rel_path)
+        if os.path.exists(full):
+            with open(full, 'rb') as f:
+                b64 = base64.b64encode(f.read()).decode()
+            entries.append(f'  {key}: "data:image/png;base64,{b64}"')
+            print(f'  Embedded logo: {key} ({os.path.getsize(full) // 1024 + 1} KB)')
+        else:
+            print(f'  WARNING: logo not found: {rel_path}')
+    return 'CONFIG.AIRLINE_LOGOS = {\n' + ',\n'.join(entries) + '\n};'
 
 
 def read(path):
@@ -53,6 +77,7 @@ def build():
     ui_js         = read('js/ui.js').strip()
     game_js       = read('js/game.js').strip()
     html_body     = read_html_structure()
+    logos_js      = airline_logos_js()
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -93,6 +118,9 @@ def build():
   </script>
   <script>
 {game_js}
+  </script>
+  <script>
+{logos_js}
   </script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {{

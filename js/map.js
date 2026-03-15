@@ -185,19 +185,58 @@ const MAP = {
     this.pins.push({ city, team, el });
   },
 
+  // Compute a great-circle (geodesic) path — east-west flights curve
+  // toward the poles, matching how real airline routes look on a map.
+  greatCirclePoints(origin, destination, steps) {
+    const toRad = d => d * Math.PI / 180;
+    const toDeg = r => r * 180 / Math.PI;
+    const lat1 = toRad(origin.lat),  lng1 = toRad(origin.lng);
+    const lat2 = toRad(destination.lat), lng2 = toRad(destination.lng);
+
+    const d = 2 * Math.asin(Math.sqrt(
+      Math.sin((lat2 - lat1) / 2) ** 2 +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin((lng2 - lng1) / 2) ** 2
+    ));
+    if (d < 0.0001) return [[origin.lng, origin.lat], [destination.lng, destination.lat]];
+
+    const pts = [];
+    for (let i = 0; i <= steps; i++) {
+      const f = i / steps;
+      const A = Math.sin((1 - f) * d) / Math.sin(d);
+      const B = Math.sin(f * d) / Math.sin(d);
+      const x = A * Math.cos(lat1) * Math.cos(lng1) + B * Math.cos(lat2) * Math.cos(lng2);
+      const y = A * Math.cos(lat1) * Math.sin(lng1) + B * Math.cos(lat2) * Math.sin(lng2);
+      const z = A * Math.sin(lat1) + B * Math.sin(lat2);
+      pts.push([toDeg(Math.atan2(y, x)), toDeg(Math.atan2(z, Math.sqrt(x * x + y * y)))]);
+    }
+    return pts;
+  },
+
+  // True compass bearing from p1→p2 ([lng,lat] pairs).
+  bearingBetween(p1, p2) {
+    const toRad = d => d * Math.PI / 180;
+    const toDeg = r => r * 180 / Math.PI;
+    const dLng = toRad(p2[0] - p1[0]);
+    const lat1 = toRad(p1[1]), lat2 = toRad(p2[1]);
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    return toDeg(Math.atan2(y, x));
+  },
+
   animateFlight(flight, onComplete) {
     const { origin, destination, airline } = flight;
     const map = this.instance;
 
-    // Fit both cities in view first
     this.fitBounds([origin, destination]);
 
-    const pathId = 'flight-path-' + Date.now();
+    // Pre-compute full geodesic path (no parabola — real great-circle arc)
+    const steps = 120;
+    const gcPath = this.greatCirclePoints(origin, destination, steps);
 
-    // Add dashed path source
+    const pathId = 'flight-path-' + Date.now();
     map.addSource(pathId, {
       type: 'geojson',
-      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [[origin.lng, origin.lat]] } }
+      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [gcPath[0]] } }
     });
     map.addLayer({
       id: pathId,
@@ -207,11 +246,10 @@ const MAP = {
         'line-color': '#f0a500',
         'line-width': 2,
         'line-dasharray': [4, 4],
-        'line-opacity': 0.6,
+        'line-opacity': 0.8,
       }
     });
 
-    // Plane marker
     const planeEl = document.createElement('div');
     planeEl.textContent = '✈';
     planeEl.style.cssText = `
@@ -225,41 +263,28 @@ const MAP = {
 
     if (this.planeMarker) this.planeMarker.remove();
     this.planeMarker = new maplibregl.Marker({ element: planeEl, anchor: 'center' })
-      .setLngLat([origin.lng, origin.lat])
+      .setLngLat(gcPath[0])
       .addTo(map);
 
-    const steps = 120;
     const duration = CONFIG.FLIGHT_DURATION_MS * (530 / airline.speed);
-    const coords = [[origin.lng, origin.lat]];
     let step = 0;
 
     const interval = setInterval(() => {
       step++;
+      const pos = gcPath[Math.min(step, gcPath.length - 1)];
       const t = step / steps;
-
-      const lng = origin.lng + (destination.lng - origin.lng) * t;
-      const baseLat = origin.lat + (destination.lat - origin.lat) * t;
-      const arcLift = Math.sin(t * Math.PI) * CONFIG.FLIGHT_ARC_HEIGHT * 12;
-      const lat = baseLat + arcLift;
-
-      coords.push([lng, lat]);
 
       map.getSource(pathId)?.setData({
         type: 'Feature',
-        geometry: { type: 'LineString', coordinates: coords }
+        geometry: { type: 'LineString', coordinates: gcPath.slice(0, step + 1) }
       });
 
-      // Rotate plane to face direction of travel
-      if (coords.length >= 2) {
-        const prev = coords[coords.length - 2];
-        const curr = coords[coords.length - 1];
-        const angle = Math.atan2(curr[0] - prev[0], curr[1] - prev[1]) * 180 / Math.PI;
-        planeEl.style.transform = `rotate(${angle}deg)`;
+      if (step > 0) {
+        const bearing = this.bearingBetween(gcPath[step - 1], pos);
+        planeEl.style.transform = `rotate(${bearing}deg)`;
       }
+      this.planeMarker.setLngLat(pos);
 
-      this.planeMarker.setLngLat([lng, lat]);
-
-      // Update flight overlay stats
       const distLeft = Math.round(flight.distanceMiles * (1 - t));
       const altitude = Math.round(Math.sin(t * Math.PI) * 35000);
       const speed = t < 0.05  ? Math.round(airline.speed * (t / 0.05))

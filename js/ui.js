@@ -135,6 +135,9 @@ const UI = {
           <span class="action-sub">Spend Flight Points</span>
         </button>
       </div>
+      <button class="btn-end-turn" onclick="UI.hideActionPanel(); GAME.nextTurn()">
+        End Turn →
+      </button>
     `;
     panel.classList.add('active');
   },
@@ -222,7 +225,9 @@ const UI = {
     overlay.innerHTML = `
       <div class="boarding-pass" style="--team-color:${team.color}">
         <div class="bp-header">
-          <div class="bp-airline">${flight.airline.label}</div>
+          ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
+            ? `<img class="bp-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+            : `<div class="bp-airline">${flight.airline.label}</div>`}
           <div class="bp-flight-num">Flight ${flight.flightNumber}</div>
         </div>
         <div class="bp-route">
@@ -266,7 +271,9 @@ const UI = {
     overlay.innerHTML = `
       <div class="flight-screen">
         <div class="fs-header">
-          <span class="fs-airline">${flight.airline.label}</span>
+          ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
+            ? `<img class="fs-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+            : `<span class="fs-airline">${flight.airline.label}</span>`}
           <span class="fs-flight">${flight.flightNumber}</span>
           <span class="fs-route">${flight.origin.airport} → ${flight.destination.airport}</span>
         </div>
@@ -375,7 +382,10 @@ const UI = {
     if (q.type === 'bullseye') {
       overlay.classList.add('transparent');
       const target = CITIES.find(c => c.id === q.targetCity);
+      // Start a 25 s timer so the game can't get permanently stuck
+      this.startChallengeTimer(25);
       MAP.enableBullseye(target, (lngLat) => {
+        clearInterval(this._timerInterval);   // cancel timer on successful click
         overlay.classList.remove('transparent');
         GAME.answerChallenge(lngLat);
       });
