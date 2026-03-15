@@ -69,11 +69,8 @@ const GAME = {
       });
     }
 
-    // Pick 3 random airlines from the pool for this game
-    const poolKeys = Object.keys(CONFIG.AIRLINE_POOL);
-    const shuffled = poolKeys.slice().sort(() => Math.random() - 0.5);
-    CONFIG.AIRLINE_MODIFIERS = {};
-    shuffled.slice(0, 3).forEach(k => { CONFIG.AIRLINE_MODIFIERS[k] = CONFIG.AIRLINE_POOL[k]; });
+    // All airlines available every game — players choose from the full range
+    CONFIG.AIRLINE_MODIFIERS = Object.assign({}, CONFIG.AIRLINE_POOL);
 
     // Pick random home city
     const homeCityId = CONFIG.HOME_CITIES[Math.floor(Math.random() * CONFIG.HOME_CITIES.length)];

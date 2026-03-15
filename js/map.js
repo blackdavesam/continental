@@ -86,6 +86,9 @@ const MAP = {
   buildStyle(pmtilesUrl) {
     return {
       version: 8,
+      // Protomaps CDN glyphs — enables all text symbol layers.
+      // Falls back gracefully (no text) if offline.
+      glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
       sources: {
         protomaps: {
           type: 'vector',
@@ -94,24 +97,25 @@ const MAP = {
         },
       },
       layers: [
+        // ---- BASE ----
         {
           id: 'background',
           type: 'background',
-          paint: { 'background-color': '#071525' }        // deep ocean
+          paint: { 'background-color': '#071525' }
         },
         {
           id: 'water',
           type: 'fill',
           source: 'protomaps',
           'source-layer': 'water',
-          paint: { 'fill-color': '#09192e' }              // lakes / rivers
+          paint: { 'fill-color': '#09192e' }
         },
         {
           id: 'land',
           type: 'fill',
           source: 'protomaps',
           'source-layer': 'land',
-          paint: { 'fill-color': '#1e3550' }              // landmass — clearly brighter than ocean
+          paint: { 'fill-color': '#1e3550' }
         },
         {
           id: 'landcover',
@@ -134,11 +138,7 @@ const MAP = {
           source: 'protomaps',
           'source-layer': 'boundaries',
           filter: ['==', ['get', 'kind'], 'region'],
-          paint: {
-            'line-color': '#2e5070',
-            'line-width': 0.6,
-            'line-dasharray': [3, 3]
-          }
+          paint: { 'line-color': '#2e5070', 'line-width': 0.6, 'line-dasharray': [3, 3] }
         },
         {
           id: 'roads',
@@ -149,6 +149,82 @@ const MAP = {
           paint: {
             'line-color': '#243f5c',
             'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.5]
+          }
+        },
+
+        // ---- LABELS (CDN glyphs — italic for water, upright for land) ----
+
+        // Oceans, seas, gulfs, lakes, rivers, bays
+        {
+          id: 'water-labels',
+          type: 'symbol',
+          source: 'protomaps',
+          'source-layer': 'places',
+          filter: ['in', ['get', 'kind'], ['literal',
+            ['ocean', 'sea', 'gulf', 'bay', 'strait', 'sound', 'lake', 'reservoir', 'river', 'canal', 'inlet']
+          ]],
+          layout: {
+            'text-field': ['get', 'name'],
+            'text-font': ['Noto Sans Regular'],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 2, 10, 5, 13, 8, 15],
+            'text-letter-spacing': 0.12,
+            'text-max-width': 10,
+          },
+          paint: {
+            'text-color': '#4e8ab5',
+            'text-halo-color': '#071525',
+            'text-halo-width': 1.5,
+          }
+        },
+
+        // State / province names (visible at low zoom, fade out when zoomed in)
+        {
+          id: 'state-labels',
+          type: 'symbol',
+          source: 'protomaps',
+          'source-layer': 'places',
+          filter: ['==', ['get', 'kind'], 'state'],
+          maxzoom: 6.5,
+          layout: {
+            'text-field': ['get', 'name'],
+            'text-font': ['Noto Sans Regular'],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 2, 9, 5, 13],
+            'text-letter-spacing': 0.18,
+            'text-transform': 'uppercase',
+            'text-max-width': 7,
+          },
+          paint: {
+            'text-color': '#3d6080',
+            'text-halo-color': '#071525',
+            'text-halo-width': 1.5,
+            'text-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0.6, 6, 1],
+          }
+        },
+
+        // All cities and towns (non-game cities show here; game cities get HTML markers on top)
+        {
+          id: 'place-labels',
+          type: 'symbol',
+          source: 'protomaps',
+          'source-layer': 'places',
+          filter: ['in', ['get', 'kind'], ['literal', ['city', 'town', 'village', 'hamlet']]],
+          layout: {
+            'text-field': ['get', 'name'],
+            'text-font': ['Noto Sans Regular'],
+            'text-size': ['interpolate', ['linear'], ['zoom'],
+              3, 9,
+              5, 11,
+              7, 12,
+              9, 14
+            ],
+            'text-anchor': 'top',
+            'text-offset': [0, 0.25],
+            'text-max-width': 8,
+          },
+          paint: {
+            'text-color': '#8ab0d0',
+            'text-halo-color': '#071525',
+            'text-halo-width': 1.2,
           }
         },
       ],
@@ -273,21 +349,27 @@ const MAP = {
       }
     });
 
-    // SVG plane that points NORTH (up) at 0° — so rotate(bearing) is always correct
+    // SVG plane pointing NORTH (up) at 0°.
+    // Rotation is applied via SVG transform attribute (rotate(deg cx cy)) — this is
+    // immune to MapLibre's CSS transform on the marker wrapper, unlike style.transform.
     const planeEl = document.createElement('div');
-    planeEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+    planeEl.style.cssText = 'filter:drop-shadow(0 0 6px rgba(240,165,0,0.8));display:block;width:28px;height:28px;';
+    const planeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    planeSvg.setAttribute('viewBox', '0 0 24 24');
+    planeSvg.setAttribute('width', '28');
+    planeSvg.setAttribute('height', '28');
+    planeSvg.innerHTML = `
       <path d="M12 2 C10.5 2 10 4 10 6 L10 20 C10 21 11 22 12 22 C13 22 14 21 14 20 L14 6 C14 4 13.5 2 12 2Z" fill="#f0a500"/>
       <polygon points="12,9 12,13 2,17 1,15" fill="#f0a500"/>
       <polygon points="12,9 12,13 22,17 23,15" fill="#f0a500"/>
       <polygon points="12,19 12,21 8,23 7,22" fill="#f0a500"/>
       <polygon points="12,19 12,21 16,23 17,22" fill="#f0a500"/>
-    </svg>`;
-    planeEl.style.cssText = `
-      filter: drop-shadow(0 0 6px rgba(240,165,0,0.8));
-      transform-origin: 50% 50%;
-      display: block;
-      width: 28px; height: 28px;
     `;
+    // Set initial heading before first animation tick
+    if (gcPath.length >= 2) {
+      planeSvg.setAttribute('transform', `rotate(${this.bearingBetween(gcPath[0], gcPath[1])} 12 12)`);
+    }
+    planeEl.appendChild(planeSvg);
 
     if (this.planeMarker) this.planeMarker.remove();
     this.planeMarker = new maplibregl.Marker({ element: planeEl, anchor: 'center' })
@@ -309,7 +391,8 @@ const MAP = {
 
       if (step > 0) {
         const bearing = this.bearingBetween(gcPath[step - 1], pos);
-        planeEl.style.transform = `rotate(${bearing}deg)`;
+        // SVG transform: rotate(angleDeg centerX centerY) — rotates around viewBox center
+        planeSvg.setAttribute('transform', `rotate(${bearing} 12 12)`);
       }
       this.planeMarker.setLngLat(pos);
 

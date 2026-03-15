@@ -554,12 +554,11 @@ html, body {
 
 /* Small logo inside airline picker buttons */
 .airline-logo-sm {
-  height: 16px;
+  height: 14px;
   width: auto;
-  max-width: 48px;
+  max-width: 46px;
   object-fit: contain;
   display: block;
-  margin: 0 auto 2px;
   background: white;
   border-radius: 2px;
   padding: 1px 3px;
@@ -1050,8 +1049,8 @@ html, body {
   background: var(--bg2);
   border: 0.5px solid var(--border);
   border-radius: 16px 16px 0 0;
-  width: min(680px, 100vw);
-  max-height: 70vh;
+  width: min(800px, 100vw);
+  max-height: 72vh;
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease;
@@ -1136,19 +1135,27 @@ html, body {
 
 .flight-airlines {
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+  max-width: 320px;
 }
 
 .airline-btn {
   background: var(--bg3);
   border: 0.5px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--text);
   font-family: var(--font-ui);
-  padding: 6px 10px;
+  padding: 5px 6px;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
   text-align: center;
+  min-width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .airline-btn:hover:not(.disabled) {
@@ -1161,8 +1168,10 @@ html, body {
   cursor: not-allowed;
 }
 
-.airline-name { font-size: 10px; color: var(--text-dim); display: block; }
-.airline-cost { font-size: 13px; color: var(--gold); }
+/* Airline name hidden — shown in native tooltip via title attribute */
+.airline-name { display: none; }
+.airline-code { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; }
+.airline-cost { font-size: 12px; font-weight: 600; color: var(--gold); }
 
 /* ============================================================
    WIN SCREEN

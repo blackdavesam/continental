@@ -160,19 +160,23 @@ const UI = {
       .map(c => {
         const distKm = haversineKm(origin.lat, origin.lng, c.lat, c.lng);
         const distMi = Math.round(distKm * 0.621371);
-        const costs = Object.entries(CONFIG.AIRLINE_MODIFIERS).map(([key, airline]) => {
-          const cost = GAME.getFlightCost(origin, c, key);
-          const logoTag = CONFIG.AIRLINE_LOGOS[airline.logoKey]
-            ? `<img class="airline-logo-sm" src="${CONFIG.AIRLINE_LOGOS[airline.logoKey]}" alt="">`
-            : '';
-          return `<button class="airline-btn ${team.cash >= cost ? '' : 'disabled'}"
-            onclick="GAME.bookFlight('${c.id}', '${key}')"
-            ${team.cash < cost ? 'disabled' : ''}>
-            ${logoTag}
-            <span class="airline-name">${airline.label}</span>
-            <span class="airline-cost">$${cost.toLocaleString()}</span>
-          </button>`;
-        }).join('');
+        // Sort cheapest → most expensive so the price ladder is obvious
+        const costs = Object.entries(CONFIG.AIRLINE_MODIFIERS)
+          .map(([key, airline]) => ({ key, airline, cost: GAME.getFlightCost(origin, c, key) }))
+          .sort((a, b) => a.cost - b.cost)
+          .map(({ key, airline, cost }) => {
+            const affordable = team.cash >= cost;
+            const logoTag = CONFIG.AIRLINE_LOGOS[airline.logoKey]
+              ? `<img class="airline-logo-sm" src="${CONFIG.AIRLINE_LOGOS[airline.logoKey]}" alt="${airline.label}">`
+              : `<span class="airline-code">${airline.logoKey}</span>`;
+            return `<button class="airline-btn ${affordable ? '' : 'disabled'}"
+              onclick="GAME.bookFlight('${c.id}', '${key}')"
+              ${affordable ? '' : 'disabled'}
+              title="${airline.label} · ${airline.cabin}">
+              ${logoTag}
+              <span class="airline-cost">$${cost.toLocaleString()}</span>
+            </button>`;
+          }).join('');
 
         return `
           <div class="flight-row">
