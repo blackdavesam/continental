@@ -240,7 +240,17 @@ const MAP = {
     const { origin, destination, airline } = flight;
     const map = this.instance;
 
-    this.fitBounds([origin, destination]);
+    // Smart zoom schedule (step thresholds for 120-step animation):
+    //   Step 0 (start)  → brief zoom into takeoff city
+    //   Step ~18 (15%)  → pull back to show full route
+    //   Step ~96 (80%)  → zoom into destination for landing
+    const ZOOM_TAKEOFF  = 5.5;
+    const ZOOM_LANDING  = 5.5;
+    const STEP_PULLBACK = 18;
+    const STEP_APPROACH = 96;
+
+    // Begin zoomed in on the departure city
+    map.flyTo({ center: [origin.lng, origin.lat], zoom: ZOOM_TAKEOFF, duration: 1200, essential: true });
 
     // Pre-compute full geodesic path (no parabola — real great-circle arc)
     const steps = 120;
@@ -263,15 +273,20 @@ const MAP = {
       }
     });
 
+    // SVG plane that points NORTH (up) at 0° — so rotate(bearing) is always correct
     const planeEl = document.createElement('div');
-    planeEl.textContent = '✈';
+    planeEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+      <path d="M12 2 C10.5 2 10 4 10 6 L10 20 C10 21 11 22 12 22 C13 22 14 21 14 20 L14 6 C14 4 13.5 2 12 2Z" fill="#f0a500"/>
+      <polygon points="12,9 12,13 2,17 1,15" fill="#f0a500"/>
+      <polygon points="12,9 12,13 22,17 23,15" fill="#f0a500"/>
+      <polygon points="12,19 12,21 8,23 7,22" fill="#f0a500"/>
+      <polygon points="12,19 12,21 16,23 17,22" fill="#f0a500"/>
+    </svg>`;
     planeEl.style.cssText = `
-      font-size: 22px;
-      color: #f0a500;
       filter: drop-shadow(0 0 6px rgba(240,165,0,0.8));
-      transform-origin: center center;
+      transform-origin: 50% 50%;
       display: block;
-      line-height: 1;
+      width: 28px; height: 28px;
     `;
 
     if (this.planeMarker) this.planeMarker.remove();
@@ -297,6 +312,13 @@ const MAP = {
         planeEl.style.transform = `rotate(${bearing}deg)`;
       }
       this.planeMarker.setLngLat(pos);
+
+      // Smart zoom: pull back to show full route, then zoom into landing
+      if (step === STEP_PULLBACK) {
+        this.fitBounds([origin, destination]);
+      } else if (step === STEP_APPROACH) {
+        map.flyTo({ center: gcPath[gcPath.length - 1], zoom: ZOOM_LANDING, duration: 2500, essential: true });
+      }
 
       const distLeft = Math.round(flight.distanceMiles * (1 - t));
       const altitude = Math.round(Math.sin(t * Math.PI) * 35000);

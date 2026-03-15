@@ -162,9 +162,13 @@ const UI = {
         const distMi = Math.round(distKm * 0.621371);
         const costs = Object.entries(CONFIG.AIRLINE_MODIFIERS).map(([key, airline]) => {
           const cost = GAME.getFlightCost(origin, c, key);
-          return `<button class="airline-btn ${team.cash >= cost ? '' : 'disabled'}" 
+          const logoTag = CONFIG.AIRLINE_LOGOS[airline.logoKey]
+            ? `<img class="airline-logo-sm" src="${CONFIG.AIRLINE_LOGOS[airline.logoKey]}" alt="">`
+            : '';
+          return `<button class="airline-btn ${team.cash >= cost ? '' : 'disabled'}"
             onclick="GAME.bookFlight('${c.id}', '${key}')"
             ${team.cash < cost ? 'disabled' : ''}>
+            ${logoTag}
             <span class="airline-name">${airline.label}</span>
             <span class="airline-cost">$${cost.toLocaleString()}</span>
           </button>`;
@@ -226,9 +230,11 @@ const UI = {
     overlay.innerHTML = `
       <div class="boarding-pass" style="--team-color:${team.color}">
         <div class="bp-header">
-          ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
-            ? `<img class="bp-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
-            : `<div class="bp-airline">${flight.airline.label}</div>`}
+          <div class="bp-logo-wrap">
+            ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
+              ? `<img class="bp-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+              : `<span class="bp-airline">${flight.airline.label}</span>`}
+          </div>
           <div class="bp-flight-num">Flight ${flight.flightNumber}</div>
         </div>
         <div class="bp-route">
@@ -272,9 +278,11 @@ const UI = {
     overlay.innerHTML = `
       <div class="flight-screen">
         <div class="fs-header">
-          ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
-            ? `<img class="fs-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
-            : `<span class="fs-airline">${flight.airline.label}</span>`}
+          <div class="fs-logo-wrap">
+            ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
+              ? `<img class="fs-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+              : `<span class="fs-airline">${flight.airline.label}</span>`}
+          </div>
           <span class="fs-flight">${flight.flightNumber}</span>
           <span class="fs-route">${flight.origin.airport} → ${flight.destination.airport}</span>
         </div>

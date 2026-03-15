@@ -28,13 +28,22 @@ const CONFIG = {
     long:   1000,  // > 1500 miles
   },
 
-  AIRLINE_MODIFIERS: {
-    delta:    { label: 'Delta Air Lines',   cabin: 'Main Cabin',  modifier: 0,   speed: 480, color: '#9b2226', logoKey: 'DAL' },
-    united:   { label: 'United Airlines',   cabin: 'Economy Plus',modifier: 100, speed: 530, color: '#1e40af', logoKey: 'UAL' },
-    american: { label: 'American Airlines', cabin: 'First Class', modifier: 300, speed: 590, color: '#b91c1c', logoKey: 'AAL' },
+  // Full pool of airlines — 3 are randomly chosen at game start
+  AIRLINE_POOL: {
+    delta:    { label: 'Delta Air Lines',    cabin: 'Main Cabin',      modifier: 0,    speed: 480, color: '#9b2226', logoKey: 'DAL' },
+    united:   { label: 'United Airlines',    cabin: 'Economy Plus',    modifier: 100,  speed: 530, color: '#1e40af', logoKey: 'UAL' },
+    american: { label: 'American Airlines',  cabin: 'First Class',     modifier: 300,  speed: 590, color: '#b91c1c', logoKey: 'AAL' },
+    southwest:{ label: 'Southwest Airlines', cabin: 'Wanna Get Away',  modifier: -100, speed: 450, color: '#e87722', logoKey: 'SWA' },
+    jetblue:  { label: 'JetBlue Airways',    cabin: 'Blue',            modifier: 50,   speed: 510, color: '#003876', logoKey: 'JBU' },
+    alaska:   { label: 'Alaska Airlines',    cabin: 'Main Cabin',      modifier: 75,   speed: 505, color: '#01426a', logoKey: 'ASA' },
+    spirit:   { label: 'Spirit Airlines',    cabin: 'Main',            modifier: -200, speed: 410, color: '#f7e600', logoKey: 'NKS' },
+    frontier: { label: 'Frontier Airlines',  cabin: 'Basic',           modifier: -150, speed: 430, color: '#4caf50', logoKey: 'FFT' },
   },
 
-  // Airline logo data URIs — injected by build.py
+  // Active airlines for this game — populated at game start from AIRLINE_POOL
+  AIRLINE_MODIFIERS: {},
+
+  // Airline logo data URIs — injected by build.py (and js/logos.js in dev)
   AIRLINE_LOGOS: {},
 
   // --- FLIGHT ANIMATION ---

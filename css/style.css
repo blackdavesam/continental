@@ -505,26 +505,64 @@ html, body {
   border-bottom: 4px solid var(--team-color, var(--gold));
 }
 
+/* Text fallback when logo isn't available */
 .bp-airline {
   font-family: var(--font-display);
-  font-size: 22px;
-  letter-spacing: 2px;
-  color: var(--gold);
+  font-size: 16px;
+  letter-spacing: 1px;
+  color: #1a1a2e;
+}
+
+/* White pill wraps logos so they display correctly on dark backgrounds */
+.bp-logo-wrap {
+  background: #fff;
+  border-radius: 6px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 46px;
 }
 
 .bp-logo {
-  height: 36px;
+  height: 32px;
   width: auto;
+  max-width: 90px;
   object-fit: contain;
-  filter: brightness(0) invert(1);  /* white logo on dark header */
+  display: block;
+}
+
+.fs-logo-wrap {
+  background: rgba(255,255,255,0.92);
+  border-radius: 4px;
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+  height: 28px;
 }
 
 .fs-logo {
-  height: 22px;
+  height: 18px;
   width: auto;
+  max-width: 64px;
   object-fit: contain;
-  filter: brightness(0) invert(1);
-  opacity: 0.9;
+  display: block;
+}
+
+/* Small logo inside airline picker buttons */
+.airline-logo-sm {
+  height: 16px;
+  width: auto;
+  max-width: 48px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 2px;
+  background: white;
+  border-radius: 2px;
+  padding: 1px 3px;
 }
 
 .bp-flight-num {
