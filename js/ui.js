@@ -160,8 +160,11 @@ const UI = {
       .map(c => {
         const distKm = haversineKm(origin.lat, origin.lng, c.lat, c.lng);
         const distMi = Math.round(distKm * 0.621371);
-        // Sort cheapest → most expensive so the price ladder is obvious
+
+        // Only show airlines that (a) are active this game AND (b) actually fly this route
+        const routeAirlines = getAvailableAirlines(origin, c);
         const costs = Object.entries(CONFIG.AIRLINE_MODIFIERS)
+          .filter(([key]) => routeAirlines.includes(key))
           .map(([key, airline]) => ({ key, airline, cost: GAME.getFlightCost(origin, c, key) }))
           .sort((a, b) => a.cost - b.cost)
           .map(({ key, airline, cost }) => {
@@ -178,6 +181,9 @@ const UI = {
             </button>`;
           }).join('');
 
+        // Safety net: hide rows with no available airlines
+        if (!costs) return null;
+
         return `
           <div class="flight-row">
             <div class="flight-dest">
@@ -187,7 +193,7 @@ const UI = {
             <div class="flight-airlines">${costs}</div>
           </div>
         `;
-      }).join('');
+      }).filter(Boolean).join('');
 
     overlay.innerHTML = `
       <div class="picker-panel">

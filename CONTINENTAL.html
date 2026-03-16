@@ -1443,6 +1443,10 @@ html, body {
        SCRIPTS — libs first, then game modules
        ======================================================== -->
 
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
   <script>
 "use strict";
 var pmtiles = (() => {
@@ -3275,16 +3279,92 @@ const CONFIG = {
     long:   1000,  // > 1500 miles
   },
 
-  // Full pool of airlines — 3 are randomly chosen at game start
+  // Full pool of airlines — subset selected at game start based on home city region
   AIRLINE_POOL: {
-    delta:    { label: 'Delta Air Lines',    cabin: 'Main Cabin',      modifier: 0,    speed: 480, color: '#9b2226', logoKey: 'DAL' },
-    united:   { label: 'United Airlines',    cabin: 'Economy Plus',    modifier: 100,  speed: 530, color: '#1e40af', logoKey: 'UAL' },
-    american: { label: 'American Airlines',  cabin: 'First Class',     modifier: 300,  speed: 590, color: '#b91c1c', logoKey: 'AAL' },
-    southwest:{ label: 'Southwest Airlines', cabin: 'Wanna Get Away',  modifier: -100, speed: 450, color: '#e87722', logoKey: 'SWA' },
-    jetblue:  { label: 'JetBlue Airways',    cabin: 'Blue',            modifier: 50,   speed: 510, color: '#003876', logoKey: 'JBU' },
-    alaska:   { label: 'Alaska Airlines',    cabin: 'Main Cabin',      modifier: 75,   speed: 505, color: '#01426a', logoKey: 'ASA' },
-    spirit:   { label: 'Spirit Airlines',    cabin: 'Main',            modifier: -200, speed: 410, color: '#f7e600', logoKey: 'NKS' },
-    frontier: { label: 'Frontier Airlines',  cabin: 'Basic',           modifier: -150, speed: 430, color: '#4caf50', logoKey: 'FFT' },
+    // --- US MAJORS (fly everywhere) ---
+    delta: {
+      label: 'Delta Air Lines',     cabin: 'Main Cabin',         modifier: 0,    speed: 480, color: '#9b2226', logoKey: 'DAL',
+      coverage: ['us_domestic', 'us_canada', 'us_mexico', 'canada_mexico'],
+    },
+    united: {
+      label: 'United Airlines',     cabin: 'Economy Plus',       modifier: 80,   speed: 520, color: '#1e40af', logoKey: 'UAL',
+      coverage: ['us_domestic', 'us_canada', 'us_mexico', 'canada_mexico'],
+    },
+    american: {
+      label: 'American Airlines',   cabin: 'Main Cabin',         modifier: 60,   speed: 510, color: '#b91c1c', logoKey: 'AAL',
+      coverage: ['us_domestic', 'us_canada', 'us_mexico', 'canada_mexico'],
+    },
+
+    // --- US BUDGET (domestic + selective international) ---
+    southwest: {
+      label: 'Southwest Airlines',  cabin: 'Wanna Get Away',     modifier: -120, speed: 450, color: '#e87722', logoKey: 'SWA',
+      coverage: ['us_domestic'],
+    },
+    jetblue: {
+      label: 'JetBlue Airways',     cabin: 'Blue',               modifier: -40,  speed: 500, color: '#003876', logoKey: 'JBU',
+      coverage: ['us_domestic', 'us_mexico_leisure'],
+    },
+    frontier: {
+      label: 'Frontier Airlines',   cabin: 'Basic',              modifier: -160, speed: 430, color: '#4caf50', logoKey: 'FFT',
+      coverage: ['us_domestic', 'us_mexico_leisure'],
+    },
+    spirit: {
+      label: 'Spirit Airlines',     cabin: 'Main',               modifier: -200, speed: 410, color: '#f7e600', logoKey: 'NKS',
+      coverage: ['us_domestic', 'us_mexico_leisure'],
+    },
+
+    // --- US REGIONAL ---
+    alaska: {
+      label: 'Alaska Airlines',     cabin: 'Main Cabin',         modifier: -30,  speed: 495, color: '#01426a', logoKey: 'ASA',
+      coverage: ['us_pacific', 'us_canada_west'],
+      // Pacific Coast + Western Canada only: SEA, SFO, LAX, LAS, PHX, DEN + YVR, YYC
+    },
+
+    // --- CANADIAN CARRIERS ---
+    air_canada: {
+      label: 'Air Canada',          cabin: 'Economy',            modifier: 40,   speed: 490, color: '#cc0000', logoKey: 'ACA',
+      coverage: ['us_canada', 'canada_domestic', 'canada_mexico'],
+    },
+    westjet: {
+      label: 'WestJet',             cabin: 'Economy',            modifier: -50,  speed: 465, color: '#00457c', logoKey: 'WJA',
+      coverage: ['canada_domestic', 'us_canada_west', 'canada_mexico'],
+      // Canada domestic + US West + Mexico leisure. Calgary hub.
+    },
+    porter: {
+      label: 'Porter Airlines',     cabin: 'Economy',            modifier: -20,  speed: 440, color: '#4a1942', logoKey: 'POE',
+      coverage: ['canada_east', 'us_canada_east'],
+      // Eastern Canada only: YYZ, YUL, YOW + US Northeast: BOS, JFK, ORD
+    },
+
+    // --- MEXICAN CARRIERS ---
+    aeromexico: {
+      label: 'Aeroméxico',          cabin: 'AM Plus',            modifier: 30,   speed: 470, color: '#002a5c', logoKey: 'AMX',
+      coverage: ['us_mexico', 'canada_mexico', 'mexico_domestic'],
+    },
+    volaris: {
+      label: 'Volaris',             cabin: 'Basic',              modifier: -180, speed: 415, color: '#8b1a8b', logoKey: 'VOI',
+      coverage: ['us_mexico_popular', 'mexico_domestic'],
+      // US cities with large Mexican populations: LAX, DFW, IAH, ORD, LAS only
+    },
+  },
+
+  // Maps coverage tags to which city-pair types they allow.
+  // Used by getAvailableAirlines(origin, destination)
+  ROUTE_COVERAGE_RULES: {
+    us_domestic:       { originCountries: ['US'],      destCountries: ['US'] },
+    us_canada:         { originCountries: ['US','CA'],  destCountries: ['US','CA'] },
+    us_mexico:         { originCountries: ['US','MX'],  destCountries: ['US','MX'] },
+    canada_domestic:   { originCountries: ['CA'],      destCountries: ['CA'] },
+    canada_mexico:     { originCountries: ['CA','MX'],  destCountries: ['CA','MX'] },
+    mexico_domestic:   { originCountries: ['MX'],      destCountries: ['MX'] },
+
+    // Restricted regional coverage — checked separately by city id
+    us_pacific:        { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','portland'] },
+    us_canada_west:    { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','vancouver','calgary'] },
+    us_canada_east:    { allowedCityIds: ['new_york','boston','philadelphia','washington','chicago','toronto','montreal','ottawa'] },
+    canada_east:       { allowedCityIds: ['toronto','montreal','ottawa'] },
+    us_mexico_leisure: { allowedCityIds: ['miami','new_york','boston','chicago','dallas','houston','los_angeles','san_francisco','seattle','las_vegas','phoenix','denver','atlanta','cancun','mexico_city','guadalajara'] },
+    us_mexico_popular: { allowedCityIds: ['los_angeles','dallas','houston','chicago','las_vegas','san_francisco','phoenix','cancun','mexico_city','guadalajara'] },
   },
 
   // Active airlines for this game — populated at game start from AIRLINE_POOL
@@ -4170,8 +4250,11 @@ const UI = {
       .map(c => {
         const distKm = haversineKm(origin.lat, origin.lng, c.lat, c.lng);
         const distMi = Math.round(distKm * 0.621371);
-        // Sort cheapest → most expensive so the price ladder is obvious
+
+        // Only show airlines that (a) are active this game AND (b) actually fly this route
+        const routeAirlines = getAvailableAirlines(origin, c);
         const costs = Object.entries(CONFIG.AIRLINE_MODIFIERS)
+          .filter(([key]) => routeAirlines.includes(key))
           .map(([key, airline]) => ({ key, airline, cost: GAME.getFlightCost(origin, c, key) }))
           .sort((a, b) => a.cost - b.cost)
           .map(({ key, airline, cost }) => {
@@ -4188,6 +4271,9 @@ const UI = {
             </button>`;
           }).join('');
 
+        // Safety net: hide rows with no available airlines
+        if (!costs) return null;
+
         return `
           <div class="flight-row">
             <div class="flight-dest">
@@ -4197,7 +4283,7 @@ const UI = {
             <div class="flight-airlines">${costs}</div>
           </div>
         `;
-      }).join('');
+      }).filter(Boolean).join('');
 
     overlay.innerHTML = `
       <div class="picker-panel">
@@ -4591,12 +4677,50 @@ function haversineKm(lat1, lng1, lat2, lng2) {
 
 function getFlightCost(origin, destination, airlineKey) {
   const dist = haversineKm(origin.lat, origin.lng, destination.lat, destination.lng);
-  const airline = CONFIG.AIRLINE_MODIFIERS[airlineKey];
-  let base;
-  if (dist < 800)       base = CONFIG.FLIGHT_COSTS.short;
-  else if (dist < 2400) base = CONFIG.FLIGHT_COSTS.medium;
-  else                  base = CONFIG.FLIGHT_COSTS.long;
-  return base + airline.modifier;
+  const airline = CONFIG.AIRLINE_POOL[airlineKey] || CONFIG.AIRLINE_MODIFIERS[airlineKey];
+
+  // Base rate: $0.18 per km, minimum $150
+  const baseRate = 0.18;
+  const base = Math.max(150, Math.round(dist * baseRate));
+
+  // Per-route variance: deterministic based on city pair so it's
+  // consistent within a session but feels organic
+  const seed = (origin.id + destination.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const variance = ((seed % 21) - 10) / 100; // -10% to +10%
+  const varied = Math.round(base * (1 + variance));
+
+  // Airline modifier
+  const total = varied + airline.modifier;
+
+  // Round to nearest $5 for clean display
+  return Math.max(100, Math.round(total / 5) * 5);
+}
+
+// Returns array of airlineKeys available for a given origin→destination pair
+function getAvailableAirlines(origin, destination) {
+  const rules = CONFIG.ROUTE_COVERAGE_RULES;
+  const pool = CONFIG.AIRLINE_POOL;
+
+  return Object.entries(pool).filter(([key, airline]) => {
+    return airline.coverage.some(tag => {
+      const rule = rules[tag];
+      if (!rule) return false;
+
+      // Country-pair rule
+      if (rule.originCountries) {
+        return rule.originCountries.includes(origin.country) &&
+               rule.destCountries.includes(destination.country);
+      }
+
+      // City-allowlist rule
+      if (rule.allowedCityIds) {
+        return rule.allowedCityIds.includes(origin.id) &&
+               rule.allowedCityIds.includes(destination.id);
+      }
+
+      return false;
+    });
+  }).map(([key]) => key);
 }
 
 const GAME = {
@@ -4644,12 +4768,29 @@ const GAME = {
       });
     }
 
-    // All airlines available every game — players choose from the full range
-    CONFIG.AIRLINE_MODIFIERS = Object.assign({}, CONFIG.AIRLINE_POOL);
-
-    // Pick random home city
+    // Pick random home city FIRST (needed for airline selection)
     const homeCityId = CONFIG.HOME_CITIES[Math.floor(Math.random() * CONFIG.HOME_CITIES.length)];
     this.homeCity = CITIES.find(c => c.id === homeCityId) || CITIES[0];
+
+    // Pick 3-4 airlines relevant to the home city, always include at least one major
+    const allKeys = Object.keys(CONFIG.AIRLINE_POOL);
+    const majors = ['delta', 'united', 'american'];
+    const others = allKeys.filter(k => !majors.includes(k));
+
+    // Always include 1 random major
+    const selectedMajor = majors[Math.floor(Math.random() * majors.length)];
+
+    // Pick 2 others that serve the home city's region
+    const homeAvailable = getAvailableAirlines(this.homeCity, this.homeCity);
+    const relevantOthers = others
+      .filter(k => homeAvailable.includes(k))
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2);
+
+    CONFIG.AIRLINE_MODIFIERS = {};
+    [selectedMajor, ...relevantOthers].forEach(k => {
+      CONFIG.AIRLINE_MODIFIERS[k] = CONFIG.AIRLINE_POOL[k];
+    });
 
     // All teams start at home city
     this.teams.forEach(team => {

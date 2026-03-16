@@ -28,16 +28,92 @@ const CONFIG = {
     long:   1000,  // > 1500 miles
   },
 
-  // Full pool of airlines — 3 are randomly chosen at game start
+  // Full pool of airlines — subset selected at game start based on home city region
   AIRLINE_POOL: {
-    delta:    { label: 'Delta Air Lines',    cabin: 'Main Cabin',      modifier: 0,    speed: 480, color: '#9b2226', logoKey: 'DAL' },
-    united:   { label: 'United Airlines',    cabin: 'Economy Plus',    modifier: 100,  speed: 530, color: '#1e40af', logoKey: 'UAL' },
-    american: { label: 'American Airlines',  cabin: 'First Class',     modifier: 300,  speed: 590, color: '#b91c1c', logoKey: 'AAL' },
-    southwest:{ label: 'Southwest Airlines', cabin: 'Wanna Get Away',  modifier: -100, speed: 450, color: '#e87722', logoKey: 'SWA' },
-    jetblue:  { label: 'JetBlue Airways',    cabin: 'Blue',            modifier: 50,   speed: 510, color: '#003876', logoKey: 'JBU' },
-    alaska:   { label: 'Alaska Airlines',    cabin: 'Main Cabin',      modifier: 75,   speed: 505, color: '#01426a', logoKey: 'ASA' },
-    spirit:   { label: 'Spirit Airlines',    cabin: 'Main',            modifier: -200, speed: 410, color: '#f7e600', logoKey: 'NKS' },
-    frontier: { label: 'Frontier Airlines',  cabin: 'Basic',           modifier: -150, speed: 430, color: '#4caf50', logoKey: 'FFT' },
+    // --- US MAJORS (fly everywhere) ---
+    delta: {
+      label: 'Delta Air Lines',     cabin: 'Main Cabin',         modifier: 0,    speed: 480, color: '#9b2226', logoKey: 'DAL',
+      coverage: ['us_domestic', 'us_canada', 'us_mexico', 'canada_mexico'],
+    },
+    united: {
+      label: 'United Airlines',     cabin: 'Economy Plus',       modifier: 80,   speed: 520, color: '#1e40af', logoKey: 'UAL',
+      coverage: ['us_domestic', 'us_canada', 'us_mexico', 'canada_mexico'],
+    },
+    american: {
+      label: 'American Airlines',   cabin: 'Main Cabin',         modifier: 60,   speed: 510, color: '#b91c1c', logoKey: 'AAL',
+      coverage: ['us_domestic', 'us_canada', 'us_mexico', 'canada_mexico'],
+    },
+
+    // --- US BUDGET (domestic + selective international) ---
+    southwest: {
+      label: 'Southwest Airlines',  cabin: 'Wanna Get Away',     modifier: -120, speed: 450, color: '#e87722', logoKey: 'SWA',
+      coverage: ['us_domestic'],
+    },
+    jetblue: {
+      label: 'JetBlue Airways',     cabin: 'Blue',               modifier: -40,  speed: 500, color: '#003876', logoKey: 'JBU',
+      coverage: ['us_domestic', 'us_mexico_leisure'],
+    },
+    frontier: {
+      label: 'Frontier Airlines',   cabin: 'Basic',              modifier: -160, speed: 430, color: '#4caf50', logoKey: 'FFT',
+      coverage: ['us_domestic', 'us_mexico_leisure'],
+    },
+    spirit: {
+      label: 'Spirit Airlines',     cabin: 'Main',               modifier: -200, speed: 410, color: '#f7e600', logoKey: 'NKS',
+      coverage: ['us_domestic', 'us_mexico_leisure'],
+    },
+
+    // --- US REGIONAL ---
+    alaska: {
+      label: 'Alaska Airlines',     cabin: 'Main Cabin',         modifier: -30,  speed: 495, color: '#01426a', logoKey: 'ASA',
+      coverage: ['us_pacific', 'us_canada_west'],
+      // Pacific Coast + Western Canada only: SEA, SFO, LAX, LAS, PHX, DEN + YVR, YYC
+    },
+
+    // --- CANADIAN CARRIERS ---
+    air_canada: {
+      label: 'Air Canada',          cabin: 'Economy',            modifier: 40,   speed: 490, color: '#cc0000', logoKey: 'ACA',
+      coverage: ['us_canada', 'canada_domestic', 'canada_mexico'],
+    },
+    westjet: {
+      label: 'WestJet',             cabin: 'Economy',            modifier: -50,  speed: 465, color: '#00457c', logoKey: 'WJA',
+      coverage: ['canada_domestic', 'us_canada_west', 'canada_mexico'],
+      // Canada domestic + US West + Mexico leisure. Calgary hub.
+    },
+    porter: {
+      label: 'Porter Airlines',     cabin: 'Economy',            modifier: -20,  speed: 440, color: '#4a1942', logoKey: 'POE',
+      coverage: ['canada_east', 'us_canada_east'],
+      // Eastern Canada only: YYZ, YUL, YOW + US Northeast: BOS, JFK, ORD
+    },
+
+    // --- MEXICAN CARRIERS ---
+    aeromexico: {
+      label: 'Aeroméxico',          cabin: 'AM Plus',            modifier: 30,   speed: 470, color: '#002a5c', logoKey: 'AMX',
+      coverage: ['us_mexico', 'canada_mexico', 'mexico_domestic'],
+    },
+    volaris: {
+      label: 'Volaris',             cabin: 'Basic',              modifier: -180, speed: 415, color: '#8b1a8b', logoKey: 'VOI',
+      coverage: ['us_mexico_popular', 'mexico_domestic'],
+      // US cities with large Mexican populations: LAX, DFW, IAH, ORD, LAS only
+    },
+  },
+
+  // Maps coverage tags to which city-pair types they allow.
+  // Used by getAvailableAirlines(origin, destination)
+  ROUTE_COVERAGE_RULES: {
+    us_domestic:       { originCountries: ['US'],      destCountries: ['US'] },
+    us_canada:         { originCountries: ['US','CA'],  destCountries: ['US','CA'] },
+    us_mexico:         { originCountries: ['US','MX'],  destCountries: ['US','MX'] },
+    canada_domestic:   { originCountries: ['CA'],      destCountries: ['CA'] },
+    canada_mexico:     { originCountries: ['CA','MX'],  destCountries: ['CA','MX'] },
+    mexico_domestic:   { originCountries: ['MX'],      destCountries: ['MX'] },
+
+    // Restricted regional coverage — checked separately by city id
+    us_pacific:        { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','portland'] },
+    us_canada_west:    { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','vancouver','calgary'] },
+    us_canada_east:    { allowedCityIds: ['new_york','boston','philadelphia','washington','chicago','toronto','montreal','ottawa'] },
+    canada_east:       { allowedCityIds: ['toronto','montreal','ottawa'] },
+    us_mexico_leisure: { allowedCityIds: ['miami','new_york','boston','chicago','dallas','houston','los_angeles','san_francisco','seattle','las_vegas','phoenix','denver','atlanta','cancun','mexico_city','guadalajara'] },
+    us_mexico_popular: { allowedCityIds: ['los_angeles','dallas','houston','chicago','las_vegas','san_francisco','phoenix','cancun','mexico_city','guadalajara'] },
   },
 
   // Active airlines for this game — populated at game start from AIRLINE_POOL

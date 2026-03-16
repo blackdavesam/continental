@@ -16,12 +16,50 @@ function haversineKm(lat1, lng1, lat2, lng2) {
 
 function getFlightCost(origin, destination, airlineKey) {
   const dist = haversineKm(origin.lat, origin.lng, destination.lat, destination.lng);
-  const airline = CONFIG.AIRLINE_MODIFIERS[airlineKey];
-  let base;
-  if (dist < 800)       base = CONFIG.FLIGHT_COSTS.short;
-  else if (dist < 2400) base = CONFIG.FLIGHT_COSTS.medium;
-  else                  base = CONFIG.FLIGHT_COSTS.long;
-  return base + airline.modifier;
+  const airline = CONFIG.AIRLINE_POOL[airlineKey] || CONFIG.AIRLINE_MODIFIERS[airlineKey];
+
+  // Base rate: $0.18 per km, minimum $150
+  const baseRate = 0.18;
+  const base = Math.max(150, Math.round(dist * baseRate));
+
+  // Per-route variance: deterministic based on city pair so it's
+  // consistent within a session but feels organic
+  const seed = (origin.id + destination.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const variance = ((seed % 21) - 10) / 100; // -10% to +10%
+  const varied = Math.round(base * (1 + variance));
+
+  // Airline modifier
+  const total = varied + airline.modifier;
+
+  // Round to nearest $5 for clean display
+  return Math.max(100, Math.round(total / 5) * 5);
+}
+
+// Returns array of airlineKeys available for a given origin→destination pair
+function getAvailableAirlines(origin, destination) {
+  const rules = CONFIG.ROUTE_COVERAGE_RULES;
+  const pool = CONFIG.AIRLINE_POOL;
+
+  return Object.entries(pool).filter(([key, airline]) => {
+    return airline.coverage.some(tag => {
+      const rule = rules[tag];
+      if (!rule) return false;
+
+      // Country-pair rule
+      if (rule.originCountries) {
+        return rule.originCountries.includes(origin.country) &&
+               rule.destCountries.includes(destination.country);
+      }
+
+      // City-allowlist rule
+      if (rule.allowedCityIds) {
+        return rule.allowedCityIds.includes(origin.id) &&
+               rule.allowedCityIds.includes(destination.id);
+      }
+
+      return false;
+    });
+  }).map(([key]) => key);
 }
 
 const GAME = {
@@ -69,12 +107,29 @@ const GAME = {
       });
     }
 
-    // All airlines available every game — players choose from the full range
-    CONFIG.AIRLINE_MODIFIERS = Object.assign({}, CONFIG.AIRLINE_POOL);
-
-    // Pick random home city
+    // Pick random home city FIRST (needed for airline selection)
     const homeCityId = CONFIG.HOME_CITIES[Math.floor(Math.random() * CONFIG.HOME_CITIES.length)];
     this.homeCity = CITIES.find(c => c.id === homeCityId) || CITIES[0];
+
+    // Pick 3-4 airlines relevant to the home city, always include at least one major
+    const allKeys = Object.keys(CONFIG.AIRLINE_POOL);
+    const majors = ['delta', 'united', 'american'];
+    const others = allKeys.filter(k => !majors.includes(k));
+
+    // Always include 1 random major
+    const selectedMajor = majors[Math.floor(Math.random() * majors.length)];
+
+    // Pick 2 others that serve the home city's region
+    const homeAvailable = getAvailableAirlines(this.homeCity, this.homeCity);
+    const relevantOthers = others
+      .filter(k => homeAvailable.includes(k))
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2);
+
+    CONFIG.AIRLINE_MODIFIERS = {};
+    [selectedMajor, ...relevantOthers].forEach(k => {
+      CONFIG.AIRLINE_MODIFIERS[k] = CONFIG.AIRLINE_POOL[k];
+    });
 
     // All teams start at home city
     this.teams.forEach(team => {
