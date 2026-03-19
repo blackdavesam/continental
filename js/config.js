@@ -6,7 +6,8 @@
 const CONFIG = {
 
   // --- MAP ---
-  MAP_THEME: 'dark',           // 'dark' | 'light' | 'night'
+  MAP_THEME: 'auto',            // 'auto' — simulated day/night cycle
+  DAY_NIGHT_CYCLE_MS: 300000,   // 5 minutes per full 24-hour in-game cycle
   MAP_STYLE_URL: '../north-america.pmtiles',
   GLYPH_URL: '../assets/fonts/glyphs/{fontstack}/{range}.pbf',
   MAP_CENTER: [-96, 48],
@@ -108,12 +109,12 @@ const CONFIG = {
     mexico_domestic:   { originCountries: ['MX'],      destCountries: ['MX'] },
 
     // Restricted regional coverage — checked separately by city id
-    us_pacific:        { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','portland'] },
-    us_canada_west:    { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','vancouver','calgary'] },
-    us_canada_east:    { allowedCityIds: ['new_york','boston','philadelphia','washington','chicago','toronto','montreal','ottawa'] },
-    canada_east:       { allowedCityIds: ['toronto','montreal','ottawa'] },
-    us_mexico_leisure: { allowedCityIds: ['miami','new_york','boston','chicago','dallas','houston','los_angeles','san_francisco','seattle','las_vegas','phoenix','denver','atlanta','cancun','mexico_city','guadalajara'] },
-    us_mexico_popular: { allowedCityIds: ['los_angeles','dallas','houston','chicago','las_vegas','san_francisco','phoenix','cancun','mexico_city','guadalajara'] },
+    us_pacific:        { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','portland','san_diego','honolulu','anchorage'] },
+    us_canada_west:    { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','portland','san_diego','anchorage','vancouver','calgary','edmonton','winnipeg'] },
+    us_canada_east:    { allowedCityIds: ['new_york','boston','philadelphia','washington','chicago','toronto','montreal','ottawa','pittsburgh','baltimore','hartford','hamilton','halifax','quebec_city'] },
+    canada_east:       { allowedCityIds: ['toronto','montreal','ottawa','hamilton','halifax','quebec_city'] },
+    us_mexico_leisure: { allowedCityIds: ['miami','new_york','boston','chicago','dallas','houston','los_angeles','san_francisco','seattle','las_vegas','phoenix','denver','atlanta','tampa','orlando','jacksonville','san_antonio','austin','san_diego','cancun','mexico_city','guadalajara','puerto_vallarta','merida','monterrey','tijuana'] },
+    us_mexico_popular: { allowedCityIds: ['los_angeles','dallas','houston','chicago','las_vegas','san_francisco','phoenix','san_antonio','san_diego','cancun','mexico_city','guadalajara','monterrey','tijuana','puebla'] },
   },
 
   // Active airlines for this game — populated at game start from AIRLINE_POOL
@@ -135,6 +136,7 @@ const CONFIG = {
   HOME_CITIES: [
     'toronto', 'chicago', 'los_angeles', 'miami',
     'seattle', 'new_york', 'mexico_city', 'montreal',
+    'vancouver', 'dallas', 'denver', 'cancun',
   ],
 
   // --- WIN CONDITIONS (randomly drawn at game start) ---
@@ -198,6 +200,57 @@ const CITIES = [
   { id: 'mexico_city',  name: 'Mexico City',   country: 'MX', region: 'mexico',       lat: 19.432, lng: -99.133, population: 9210000, tags: ['landlocked', 'population_1m'], airport: 'MEX', dossier: { tagline: 'Ancient heart of the Americas', didYouKnow: "Mexico City is sinking by up to 20cm a year — it was built on a drained lake." } },
   { id: 'cancun',       name: 'Cancún',        country: 'MX', region: 'mexico',       lat: 21.161, lng: -86.851, population: 888000,  tags: ['coastal'],              airport: 'CUN', dossier: { tagline: 'Caribbean turquoise on Mexican shores', didYouKnow: "Cancún was a tiny island of 117 people in 1970. The Mexican government planned it entirely from scratch." } },
   { id: 'guadalajara',  name: 'Guadalajara',   country: 'MX', region: 'mexico',       lat: 20.659, lng: -103.35, population: 1495000, tags: ['landlocked', 'population_1m'], airport: 'GDL', dossier: { tagline: 'Birthplace of mariachi and tequila', didYouKnow: "Tequila can only legally be produced in a small region around Guadalajara." } },
+
+  // === NEW CITIES ===
+
+  // --- CANADA (5 new) ---
+  { id: 'edmonton',     name: 'Edmonton',      country: 'CA', region: 'prairies',     lat: 53.546, lng: -113.49, population: 1010000, tags: ['canada', 'landlocked', 'population_1m'], airport: 'YEG', dossier: { tagline: 'Gateway to the Canadian North', didYouKnow: "Edmonton is the northernmost city in North America with a population over one million." } },
+  { id: 'winnipeg',     name: 'Winnipeg',      country: 'CA', region: 'prairies',     lat: 49.895, lng: -97.138, population: 749000,  tags: ['canada', 'landlocked'], airport: 'YWG', dossier: { tagline: 'Heart of the continent', didYouKnow: "Winnipeg is the Slurpee capital of the world — it sells more than any other city, even in winter." } },
+  { id: 'halifax',      name: 'Halifax',       country: 'CA', region: 'northeast',    lat: 44.648, lng: -63.575, population: 439000,  tags: ['canada', 'coastal'],    airport: 'YHZ', dossier: { tagline: "The Atlantic's front porch", didYouKnow: "Halifax played a central role in the Titanic disaster — most of the recovered victims are buried here." } },
+  { id: 'quebec_city',  name: 'Quebec City',   country: 'CA', region: 'northeast',    lat: 46.813, lng: -71.208, population: 549000,  tags: ['canada'],               airport: 'YQB', dossier: { tagline: 'A piece of old France in North America', didYouKnow: "Quebec City is the only walled city north of Mexico — its fortifications date to the 1600s." } },
+  { id: 'hamilton',     name: 'Hamilton',      country: 'CA', region: 'great_lakes',  lat: 43.255, lng: -79.871, population: 569000,  tags: ['canada'],               airport: 'YHM', dossier: { tagline: 'Steel city with a waterfall heart', didYouKnow: "Hamilton has over 100 waterfalls — more than any other city in the world." } },
+
+  // --- USA NORTHEAST (3 new) ---
+  { id: 'pittsburgh',   name: 'Pittsburgh',    country: 'US', region: 'northeast',    lat: 40.440, lng: -79.995, population: 302000,  tags: ['landlocked'],           airport: 'PIT', dossier: { tagline: 'Steel city reborn as a tech hub', didYouKnow: "Pittsburgh has 446 bridges — more than any other city in the world, including Venice." } },
+  { id: 'baltimore',    name: 'Baltimore',     country: 'US', region: 'northeast',    lat: 39.290, lng: -76.612, population: 585000,  tags: ['coastal'],              airport: 'BWI', dossier: { tagline: 'Charm City on the Chesapeake', didYouKnow: "Baltimore is home to the first passenger railroad in the United States — the B&O Railroad." } },
+  { id: 'hartford',     name: 'Hartford',      country: 'US', region: 'northeast',    lat: 41.763, lng: -72.685, population: 121000,  tags: ['landlocked'],           airport: 'BDL', dossier: { tagline: 'Insurance capital of the world', didYouKnow: "Mark Twain wrote his most famous novels while living in Hartford, Connecticut." } },
+
+  // --- USA SOUTHEAST (3 new) ---
+  { id: 'tampa',        name: 'Tampa',         country: 'US', region: 'southeast',    lat: 27.950, lng: -82.457, population: 384000,  tags: ['coastal'],              airport: 'TPA', dossier: { tagline: 'Sun, sea, and the Sunshine Skyway', didYouKnow: "Tampa hosts the largest pirate invasion in the world every year — Gasparilla." } },
+  { id: 'jacksonville', name: 'Jacksonville',  country: 'US', region: 'southeast',    lat: 30.332, lng: -81.655, population: 949000,  tags: ['coastal'],              airport: 'JAX', dossier: { tagline: 'The biggest city you haven\'t explored', didYouKnow: "Jacksonville is the largest city by area in the contiguous United States." } },
+  { id: 'orlando',      name: 'Orlando',       country: 'US', region: 'southeast',    lat: 28.538, lng: -81.379, population: 307000,  tags: ['landlocked'],           airport: 'MCO', dossier: { tagline: 'Theme park capital of the world', didYouKnow: "Orlando welcomes more than 75 million visitors a year — more than any other US city." } },
+
+  // --- USA MIDWEST (5 new) ---
+  { id: 'kansas_city',  name: 'Kansas City',   country: 'US', region: 'midwest',      lat: 39.099, lng: -94.578, population: 508000,  tags: ['landlocked'],           airport: 'MCI', dossier: { tagline: 'Barbecue, jazz, and fountains', didYouKnow: "Kansas City has more fountains than any city except Rome." } },
+  { id: 'cincinnati',   name: 'Cincinnati',    country: 'US', region: 'midwest',      lat: 39.103, lng: -84.512, population: 309000,  tags: ['landlocked'],           airport: 'CVG', dossier: { tagline: 'Queen City on the Ohio River', didYouKnow: "Cincinnati was the first US city to build a professional baseball team — the Red Stockings in 1869." } },
+  { id: 'indianapolis', name: 'Indianapolis',  country: 'US', region: 'midwest',      lat: 39.768, lng: -86.158, population: 887000,  tags: ['landlocked'],           airport: 'IND', dossier: { tagline: 'Crossroads of America', didYouKnow: "The Indianapolis 500 is the largest single-day sporting event in the world." } },
+  { id: 'milwaukee',    name: 'Milwaukee',     country: 'US', region: 'great_lakes',  lat: 43.038, lng: -87.906, population: 577000,  tags: ['coastal'],              airport: 'MKE', dossier: { tagline: 'Brew City on Lake Michigan', didYouKnow: "Milwaukee once had more breweries per capita than any city in the world." } },
+  { id: 'columbus',     name: 'Columbus',      country: 'US', region: 'midwest',      lat: 39.961, lng: -82.998, population: 905000,  tags: ['landlocked'],           airport: 'CMH', dossier: { tagline: "Ohio's rising capital", didYouKnow: "Columbus is the largest city in Ohio and one of the fastest-growing in the Midwest." } },
+
+  // --- USA SOUTH (3 new) ---
+  { id: 'austin',       name: 'Austin',        country: 'US', region: 'south',        lat: 30.267, lng: -97.743, population: 978000,  tags: ['landlocked'],           airport: 'AUS', dossier: { tagline: 'Keep Austin weird', didYouKnow: "Austin is the live music capital of the world, with more than 250 live music venues." } },
+  { id: 'san_antonio',  name: 'San Antonio',   country: 'US', region: 'south',        lat: 29.424, lng: -98.493, population: 1434000, tags: ['landlocked', 'population_1m'], airport: 'SAT', dossier: { tagline: 'Remember the Alamo', didYouKnow: "San Antonio's River Walk is 15 miles long and sits 20 feet below street level." } },
+  { id: 'memphis',      name: 'Memphis',       country: 'US', region: 'south',        lat: 35.149, lng: -90.048, population: 633000,  tags: ['landlocked'],           airport: 'MEM', dossier: { tagline: 'Home of the Blues and birthplace of Rock \'n\' Roll', didYouKnow: "FedEx chose Memphis as its hub because it sits at the geographic center of the United States." } },
+
+  // --- USA MOUNTAIN (3 new) ---
+  { id: 'salt_lake_city', name: 'Salt Lake City', country: 'US', region: 'mountain',  lat: 40.760, lng: -111.89, population: 200000,  tags: ['landlocked'],           airport: 'SLC', dossier: { tagline: 'Mountain oasis by the Great Salt Lake', didYouKnow: "The Great Salt Lake is so salty that you can float in it without trying." } },
+  { id: 'albuquerque',  name: 'Albuquerque',   country: 'US', region: 'mountain',     lat: 35.084, lng: -106.65, population: 564000,  tags: ['landlocked'],           airport: 'ABQ', dossier: { tagline: 'Hot air balloon capital of the world', didYouKnow: "Albuquerque hosts the world's largest hot air balloon festival every October." } },
+  { id: 'tucson',       name: 'Tucson',        country: 'US', region: 'mountain',     lat: 32.221, lng: -110.97, population: 542000,  tags: ['landlocked'],           airport: 'TUS', dossier: { tagline: 'The Old Pueblo', didYouKnow: "Tucson has been continuously inhabited for over 4,000 years — longer than any other city in North America." } },
+
+  // --- USA PACIFIC (3 new) ---
+  { id: 'portland',     name: 'Portland',      country: 'US', region: 'pacific',      lat: 45.505, lng: -122.68, population: 652000,  tags: ['coastal'],              airport: 'PDX', dossier: { tagline: 'Keep Portland weird', didYouKnow: "Portland has more breweries per capita than any other city in the world." } },
+  { id: 'san_diego',    name: 'San Diego',     country: 'US', region: 'pacific',      lat: 32.715, lng: -117.16, population: 1386000, tags: ['coastal', 'population_1m'], airport: 'SAN', dossier: { tagline: "America's Finest City", didYouKnow: "San Diego has the most perfect weather of any US city — averaging 266 sunny days per year." } },
+  { id: 'honolulu',     name: 'Honolulu',      country: 'US', region: 'pacific',      lat: 21.306, lng: -157.86, population: 350000,  tags: ['coastal'],              airport: 'HNL', dossier: { tagline: 'Paradise in the middle of the Pacific', didYouKnow: "Honolulu is the most isolated major city on Earth — 2,390 miles from the nearest mainland." } },
+  { id: 'anchorage',    name: 'Anchorage',     country: 'US', region: 'pacific',      lat: 61.218, lng: -149.90, population: 291000,  tags: ['coastal'],              airport: 'ANC', dossier: { tagline: "Alaska's urban frontier", didYouKnow: "Anchorage receives 19 hours of daylight on the summer solstice and only 5.5 hours in winter." } },
+
+  // --- MEXICO (7 new) ---
+  { id: 'monterrey',    name: 'Monterrey',     country: 'MX', region: 'mexico',       lat: 25.686, lng: -100.31, population: 1135000, tags: ['landlocked', 'population_1m'], airport: 'MTY', dossier: { tagline: 'Industrial powerhouse of Mexico', didYouKnow: "Monterrey produces more steel than any other city in Latin America." } },
+  { id: 'tijuana',      name: 'Tijuana',       country: 'MX', region: 'mexico',       lat: 32.514, lng: -117.03, population: 1922000, tags: ['coastal', 'population_1m'],    airport: 'TIJ', dossier: { tagline: 'The busiest border crossing on Earth', didYouKnow: "The San Ysidro port of entry between Tijuana and San Diego sees over 70,000 crossings per day." } },
+  { id: 'puerto_vallarta', name: 'Puerto Vallarta', country: 'MX', region: 'mexico',  lat: 20.653, lng: -105.22, population: 291000,  tags: ['coastal'],              airport: 'PVR', dossier: { tagline: 'Pacific jewel of the Mexican Riviera', didYouKnow: "Puerto Vallarta became famous after Elizabeth Taylor and Richard Burton filmed Night of the Iguana here in 1964." } },
+  { id: 'merida',       name: 'Mérida',        country: 'MX', region: 'mexico',       lat: 20.967, lng: -89.592, population: 995000,  tags: ['landlocked'],           airport: 'MID', dossier: { tagline: 'White City of the Yucatán', didYouKnow: "Mérida was built on top of the ancient Maya city of T'hó and is one of the oldest cities in the Americas." } },
+  { id: 'puebla',       name: 'Puebla',        country: 'MX', region: 'mexico',       lat: 19.041, lng: -98.206, population: 1576000, tags: ['landlocked', 'population_1m'], airport: 'PBC', dossier: { tagline: 'City of Angels and tiles', didYouKnow: "Puebla is where Cinco de Mayo actually happened — a Mexican victory over the French army in 1862." } },
+  { id: 'leon',         name: 'León',          country: 'MX', region: 'mexico',       lat: 21.125, lng: -101.68, population: 1579000, tags: ['landlocked', 'population_1m'], airport: 'BJX', dossier: { tagline: 'Shoe capital of the world', didYouKnow: "León produces more shoes than any other city on Earth — over 60 million pairs per year." } },
+  { id: 'oaxaca',       name: 'Oaxaca',        country: 'MX', region: 'mexico',       lat: 17.073, lng: -96.726, population: 300000,  tags: ['landlocked'],           airport: 'OAX', dossier: { tagline: 'Where ancient cultures and mezcal meet', didYouKnow: "Oaxaca is the birthplace of mezcal and has the most diverse cuisine in all of Mexico." } },
 ];
 
 // ============================================================

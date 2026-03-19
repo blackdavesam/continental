@@ -3,6 +3,40 @@
 //  MapLibre + PMTiles map logic
 // ============================================================
 
+// --- Day/Night Color Palettes ---
+const MAP_THEMES = {
+  day: {
+    background:   '#b8d4e3',
+    water:        '#6fa8c7',
+    land:         '#c8b99a',
+    landcover:    '#a3b87c',
+    countries:    '#8a6e50',
+    states:       '#a89880',
+    roads:        '#b8a890',
+    waterLabels:  '#2a6090',
+    stateLabels:  '#6b5a48',
+    placeLabels:  '#4a3828',
+    labelHalo:    'rgba(200,185,154,0.7)',
+    cityDotColor: '#7a6a55',   // neutral brown dot for unclaimed cities
+    sweepColor:   'rgba(4,13,26,0.92)',  // dark sweep for day→night
+  },
+  night: {
+    background:   '#040d1a',
+    water:        '#071428',
+    land:         '#1a2d1e',
+    landcover:    '#1e3524',
+    countries:    '#5a9060',
+    states:       '#2a4a30',
+    roads:        '#1e3020',
+    waterLabels:  '#4e8ab5',
+    stateLabels:  '#3a6840',
+    placeLabels:  '#7ab090',
+    labelHalo:    '#040d1a',
+    cityDotColor: '#ffdd88',   // warm glow for unclaimed cities
+    sweepColor:   'rgba(184,212,227,0.92)', // light sweep for night→day
+  },
+};
+
 const MAP = {
   instance: null,
   pins: [],
@@ -10,6 +44,18 @@ const MAP = {
   planeMarker: null,
   cityLabelMarkers: [],   // HTML markers for city names (offline)
   teamMarkers: {},        // teamId → maplibregl.Marker (current position)
+  teamHeadings: {},       // teamId → bearing in degrees (0 = north)
+
+  // Day/night cycle state
+  currentTheme: 'day',
+  gameHour: 8,            // simulated in-game hour (0–23)
+  _cycleInterval: null,
+  _pmtilesUrl: null,
+  _base: null,
+  _transitioning: false,  // true during day/night sweep animation
+
+  // City ownership: cityId → team.color (set when a team visits)
+  _cityOwners: {},
 
   async init() {
     if (this.instance) return;
@@ -21,11 +67,16 @@ const MAP = {
     );
 
     // Resolve paths relative to the HTML file
-    const base = window.location.href.replace(/\/[^/]*$/, '/');
-    const pmtilesUrl = base + 'north-america.pmtiles';
+    this._base = window.location.href.replace(/\/[^/]*$/, '/');
+    this._pmtilesUrl = this._base + 'north-america.pmtiles';
+
+    // Pick initial theme based on a random starting hour
+    this.gameHour = Math.floor(Math.random() * 24);
+    this.currentTheme = this._isNightHour(this.gameHour) ? 'night' : 'day';
+
     this.instance = new maplibregl.Map({
       container: 'map',
-      style: this.buildStyle(pmtilesUrl),
+      style: this.buildStyle(this._pmtilesUrl, this._base, this.currentTheme),
       center: CONFIG.MAP_CENTER,
       zoom: CONFIG.MAP_ZOOM,
       attributionControl: false,
@@ -41,12 +92,24 @@ const MAP = {
       setTimeout(resolve, 8000);
     });
 
-    // Place HTML city-name labels for all 28 game cities (fully offline)
+    // Place HTML city-name labels for all game cities (fully offline)
     this.addCityLabels();
+
+    // Add city dots/lights
+    this._addCityOverlays();
 
     // Hide loading indicator
     const loader = document.getElementById('map-loading');
     if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 500); }
+
+    // Ensure sweep overlay exists
+    this._ensureSweepOverlay();
+
+    // Start the simulated day/night clock
+    this.startDayNightClock();
+
+    // Show initial time indicator
+    this._updateTimeHUD();
 
     return this;
   },
@@ -63,32 +126,517 @@ const MAP = {
     });
   },
 
-  // Place or move a team's current-position avatar on the map.
-  updateTeamMarker(team) {
+  // Place or move a team's current-position airplane avatar on the map.
+  // heading: bearing in degrees (0=north, 90=east, etc). If omitted, keeps previous heading.
+  updateTeamMarker(team, heading) {
     if (!this.instance || !team.currentCity) return;
     const { lng, lat } = team.currentCity;
 
+    if (heading !== undefined) {
+      this.teamHeadings[team.id] = heading;
+    }
+    const deg = this.teamHeadings[team.id] || 0;
+
     if (this.teamMarkers[team.id]) {
       this.teamMarkers[team.id].setLngLat([lng, lat]);
+      // Update rotation on the SVG group
+      const g = this.teamMarkers[team.id].getElement().querySelector('.tm-rotator');
+      if (g) g.setAttribute('transform', `rotate(${deg} 16 16)`);
     } else {
       const el = document.createElement('div');
       el.className = 'team-map-marker';
-      el.style.background = team.color;
-      el.style.boxShadow = `0 0 10px ${team.color}88`;
-      el.textContent = team.name.charAt(0).toUpperCase();
       el.title = team.name;
-      this.teamMarkers[team.id] = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      el.innerHTML = `<svg viewBox="0 0 32 32" width="32" height="32">
+        <defs>
+          <filter id="glow-${team.id}" x="-40%" y="-40%" width="180%" height="180%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="${team.color}" flood-opacity="0.7"/>
+          </filter>
+        </defs>
+        <g class="tm-rotator" transform="rotate(${deg} 16 16)">
+          <g filter="url(#glow-${team.id})">
+            <path d="M16 4 C14.5 4 14 5.5 14 7 L14 13 L6 17 L6 19 L14 17 L14 23 L11 25 L11 27 L16 26 L21 27 L21 25 L18 23 L18 17 L26 19 L26 17 L18 13 L18 7 C18 5.5 17.5 4 16 4Z"
+              fill="${team.color}" stroke="rgba(255,255,255,0.9)" stroke-width="0.8"/>
+          </g>
+          <text x="16" y="16" text-anchor="middle" dominant-baseline="central"
+            font-size="8" font-weight="bold" fill="white" font-family="sans-serif"
+            style="text-shadow:0 0 2px rgba(0,0,0,0.6)">${team.name.charAt(0).toUpperCase()}</text>
+        </g>
+      </svg>`;
+      this.teamMarkers[team.id] = new maplibregl.Marker({ element: el, anchor: 'center', pitchAlignment: 'map' })
         .setLngLat([lng, lat])
         .addTo(this.instance);
     }
   },
 
-  buildStyle(pmtilesUrl) {
+  // --- Day/Night helpers ---
+  _isNightHour(h) {
+    return h >= 19 || h < 7; // Night: 7PM–6:59AM
+  },
+
+  _formatGameTime(h) {
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${h12}:00 ${ampm}`;
+  },
+
+  _updateTimeHUD() {
+    let el = document.getElementById('game-time-hud');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'game-time-hud';
+      const gameScreen = document.getElementById('screen-game');
+      if (gameScreen) gameScreen.appendChild(el);
+    }
+    const isNight = this._isNightHour(this.gameHour);
+    const icon = isNight ? '🌙' : '☀️';
+    el.textContent = `${icon} ${this._formatGameTime(this.gameHour)}`;
+    el.className = isNight ? 'time-hud night' : 'time-hud day';
+  },
+
+  // ============================================================
+  //  CITY DOTS (day) & CITY LIGHTS (night)
+  // ============================================================
+
+  // Deterministic pseudo-random from seed string
+  _seededRandom(seed) {
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) {
+      h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
+    }
+    return () => {
+      h = (h * 16807 + 0) % 2147483647;
+      return (h & 0x7fffffff) / 2147483647;
+    };
+  },
+
+  // Generate scatter light points around a city for the night satellite look
+  _generateScatterPoints(city) {
+    const rng = this._seededRandom(city.id);
+    const pop = city.population || 100000;
+    // More populous cities get more scatter dots
+    const count = Math.min(25, Math.max(4, Math.round(Math.log10(pop) * 4)));
+    // Spread radius scales with population (in degrees, ~0.05–0.3)
+    const spread = Math.min(0.3, Math.max(0.05, Math.log10(pop) * 0.04));
+    const pts = [];
+    for (let i = 0; i < count; i++) {
+      const angle = rng() * Math.PI * 2;
+      const dist = rng() * spread;
+      pts.push({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [city.lng + Math.cos(angle) * dist, city.lat + Math.sin(angle) * dist * 0.7]
+        },
+        properties: { type: 'scatter', brightness: 0.3 + rng() * 0.5 },
+      });
+    }
+    return pts;
+  },
+
+  // Build the GeoJSON data for city markers
+  _buildCityGeoJSON() {
+    const cities = typeof CITIES !== 'undefined' ? CITIES : [];
+    const features = [];
+
+    cities.forEach(c => {
+      const ownerColor = this._cityOwners[c.id] || null;
+      // Main city point
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [c.lng, c.lat] },
+        properties: {
+          type: 'city',
+          name: c.name,
+          pop: c.population || 100000,
+          color: ownerColor || '',   // '' = unclaimed
+          id: c.id,
+        },
+      });
+
+      // Scatter points for night mode (always include; layer visibility controls them)
+      const scatter = this._generateScatterPoints(c);
+      features.push(...scatter);
+    });
+
+    return { type: 'FeatureCollection', features };
+  },
+
+  // Add city dot/light layers after map style loads
+  _addCityOverlays() {
+    if (!this.instance) return;
+    const map = this.instance;
+    const isNight = this.currentTheme === 'night';
+    const t = MAP_THEMES[this.currentTheme];
+
+    if (map.getSource('city-overlay-src')) return;
+
+    map.addSource('city-overlay-src', {
+      type: 'geojson',
+      data: this._buildCityGeoJSON(),
+    });
+
+    // Determine the "before" layer — insert before water-labels if it exists
+    const before = map.getLayer('water-labels') ? 'water-labels' : undefined;
+
+    if (isNight) {
+      // --- NIGHT MODE ---
+
+      // Scatter glow dots (the small ambient lights around cities)
+      map.addLayer({
+        id: 'city-scatter',
+        type: 'circle',
+        source: 'city-overlay-src',
+        filter: ['==', ['get', 'type'], 'scatter'],
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 0.8, 5, 1.5, 8, 3],
+          'circle-color': '#ffcc66',
+          'circle-blur': 0.4,
+          'circle-opacity': ['get', 'brightness'],
+        }
+      }, before);
+
+      // Outer soft glow for main cities
+      map.addLayer({
+        id: 'city-glow',
+        type: 'circle',
+        source: 'city-overlay-src',
+        filter: ['==', ['get', 'type'], 'city'],
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 8, 5, 16, 8, 28],
+          'circle-color': '#ffcc44',
+          'circle-blur': 1,
+          'circle-opacity': 0.25,
+        }
+      }, before);
+
+      // Bright core for main cities (uses team color if claimed, else warm yellow)
+      map.addLayer({
+        id: 'city-core',
+        type: 'circle',
+        source: 'city-overlay-src',
+        filter: ['==', ['get', 'type'], 'city'],
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 2.5, 5, 5, 8, 8],
+          'circle-color': [
+            'case',
+            ['!=', ['get', 'color'], ''], ['get', 'color'],
+            t.cityDotColor
+          ],
+          'circle-blur': 0.2,
+          'circle-opacity': 0.9,
+        }
+      }, before);
+
+    } else {
+      // --- DAY MODE ---
+
+      // Simple solid dot for each city (team color if claimed, neutral brown if not)
+      map.addLayer({
+        id: 'city-dot',
+        type: 'circle',
+        source: 'city-overlay-src',
+        filter: ['==', ['get', 'type'], 'city'],
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 3, 5, 5, 8, 7],
+          'circle-color': [
+            'case',
+            ['!=', ['get', 'color'], ''], ['get', 'color'],
+            t.cityDotColor
+          ],
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': 'rgba(255,255,255,0.7)',
+          'circle-opacity': 0.85,
+        }
+      }, before);
+    }
+  },
+
+  // Remove all city overlay layers
+  _removeCityOverlays() {
+    if (!this.instance) return;
+    const map = this.instance;
+    ['city-scatter', 'city-glow', 'city-core', 'city-dot'].forEach(id => {
+      try { map.removeLayer(id); } catch(e) {}
+    });
+    try { map.removeSource('city-overlay-src'); } catch(e) {}
+  },
+
+  // Call when a city is claimed by a team — updates the dot color
+  claimCity(cityId, teamColor) {
+    this._cityOwners[cityId] = teamColor;
+    // Update GeoJSON source if it exists
+    if (this.instance) {
+      const src = this.instance.getSource('city-overlay-src');
+      if (src) src.setData(this._buildCityGeoJSON());
+    }
+  },
+
+  // ============================================================
+  //  DAY/NIGHT SWEEP TRANSITION
+  // ============================================================
+
+  _ensureSweepOverlay() {
+    if (document.getElementById('day-night-sweep')) return;
+    const el = document.createElement('div');
+    el.id = 'day-night-sweep';
+    const mapEl = document.getElementById('map');
+    if (mapEl) mapEl.parentElement.appendChild(el);
+  },
+
+  // Animated east-to-west sweep for day↔night transition
+  _playSweep(toTheme, onMidpoint) {
+    const sweep = document.getElementById('day-night-sweep');
+    if (!sweep) { onMidpoint(); return; }
+
+    // Color of the incoming theme (what we're transitioning TO)
+    const color = toTheme === 'night'
+      ? 'rgba(4,13,26,0.94)'    // dark curtain for nightfall
+      : 'rgba(200,212,220,0.94)'; // light curtain for dawn
+
+    sweep.style.cssText = `
+      position: absolute; inset: 0; z-index: 3; pointer-events: none;
+      background: linear-gradient(to left,
+        ${color} 0%, ${color} 50%,
+        transparent 70%, transparent 100%
+      );
+      transform: translateX(110%);
+    `;
+    sweep.offsetHeight; // force reflow
+
+    // Phase 1: sweep in from right (east) → cover map
+    sweep.style.transition = 'transform 1.2s ease-in';
+    sweep.style.transform = 'translateX(-10%)';
+
+    // At midpoint (~1s), swap the style underneath
+    setTimeout(() => {
+      onMidpoint();
+    }, 900);
+
+    // Phase 2: continue sweeping left → reveal new style
+    setTimeout(() => {
+      sweep.style.transition = 'transform 1.2s ease-out';
+      sweep.style.transform = 'translateX(-120%)';
+    }, 1300);
+
+    // Cleanup
+    setTimeout(() => {
+      sweep.style.cssText = 'position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;';
+    }, 2600);
+  },
+
+  // ============================================================
+  //  DAY/NIGHT CLOCK
+  // ============================================================
+
+  startDayNightClock() {
+    if (this._cycleInterval) clearInterval(this._cycleInterval);
+
+    // Full cycle = 5 min (300,000ms) = 24 in-game hours
+    // Each in-game hour = 300000/24 ≈ 12500ms
+    const msPerHour = (CONFIG.DAY_NIGHT_CYCLE_MS || 300000) / 24;
+
+    this._cycleInterval = setInterval(() => {
+      const prevTheme = this.currentTheme;
+      this.gameHour = (this.gameHour + 1) % 24;
+      const newTheme = this._isNightHour(this.gameHour) ? 'night' : 'day';
+
+      this._updateTimeHUD();
+
+      if (newTheme !== prevTheme && !this._transitioning) {
+        this.setTheme(newTheme);
+      }
+    }, msPerHour);
+  },
+
+  stopDayNightClock() {
+    if (this._cycleInterval) {
+      clearInterval(this._cycleInterval);
+      this._cycleInterval = null;
+    }
+  },
+
+  setTheme(theme) {
+    if (!this.instance || theme === this.currentTheme) return;
+    this._transitioning = true;
+
+    this._playSweep(theme, () => {
+      // --- Midpoint: swap style under the sweep ---
+      this.currentTheme = theme;
+
+      const center = this.instance.getCenter();
+      const zoom = this.instance.getZoom();
+
+      const newStyle = this.buildStyle(this._pmtilesUrl, this._base, theme);
+      this.instance.setStyle(newStyle);
+
+      this.instance.once('style.load', () => {
+        this.instance.setCenter(center);
+        this.instance.setZoom(zoom);
+
+        // Re-add city labels
+        this.cityLabelMarkers.forEach(el => el.remove?.());
+        this.cityLabelMarkers = [];
+        this.addCityLabels();
+
+        // Re-add city overlays (dots or lights depending on theme)
+        this._addCityOverlays();
+
+        // Re-add team markers
+        Object.values(this.teamMarkers).forEach(m => m.addTo(this.instance));
+
+        // Re-add pins
+        this.pins.forEach(p => {
+          new maplibregl.Marker({ element: p.el })
+            .setLngLat([p.city.lng, p.city.lat])
+            .addTo(this.instance);
+        });
+
+        this._transitioning = false;
+      });
+    });
+  },
+
+  buildStyle(pmtilesUrl, base, theme) {
+    const t = MAP_THEMES[theme] || MAP_THEMES.night;
+
+    const layers = [
+      // ---- BASE ----
+      {
+        id: 'background',
+        type: 'background',
+        paint: { 'background-color': t.background }
+      },
+      {
+        id: 'water',
+        type: 'fill',
+        source: 'protomaps',
+        'source-layer': 'water',
+        paint: { 'fill-color': t.water }
+      },
+      {
+        id: 'land',
+        type: 'fill',
+        source: 'protomaps',
+        'source-layer': 'land',
+        paint: { 'fill-color': t.land }
+      },
+      {
+        id: 'landcover',
+        type: 'fill',
+        source: 'protomaps',
+        'source-layer': 'landcover',
+        paint: { 'fill-color': t.landcover, 'fill-opacity': 0.5 }
+      },
+      {
+        id: 'countries',
+        type: 'line',
+        source: 'protomaps',
+        'source-layer': 'boundaries',
+        filter: ['==', ['get', 'kind'], 'country'],
+        paint: { 'line-color': t.countries, 'line-width': 1.2 }
+      },
+      {
+        id: 'states',
+        type: 'line',
+        source: 'protomaps',
+        'source-layer': 'boundaries',
+        filter: ['==', ['get', 'kind'], 'region'],
+        paint: { 'line-color': t.states, 'line-width': 0.6, 'line-dasharray': [3, 3] }
+      },
+      {
+        id: 'roads',
+        type: 'line',
+        source: 'protomaps',
+        'source-layer': 'roads',
+        minzoom: 6,
+        paint: {
+          'line-color': t.roads,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.5]
+        }
+      },
+    ];
+
+    // City overlays are added dynamically via _addCityOverlays() after style loads
+
+    // ---- LABELS ----
+    layers.push(
+      // Oceans, seas, gulfs, lakes, rivers, bays
+      {
+        id: 'water-labels',
+        type: 'symbol',
+        source: 'protomaps',
+        'source-layer': 'places',
+        filter: ['in', ['get', 'kind'], ['literal',
+          ['ocean', 'sea', 'gulf', 'bay', 'strait', 'sound', 'lake', 'reservoir', 'river', 'canal', 'inlet']
+        ]],
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 2, 10, 5, 13, 8, 15],
+          'text-letter-spacing': 0.12,
+          'text-max-width': 10,
+        },
+        paint: {
+          'text-color': t.waterLabels,
+          'text-halo-color': t.labelHalo,
+          'text-halo-width': 1.5,
+        }
+      },
+
+      // State / province names (always visible, fade slightly when zoomed in)
+      {
+        id: 'state-labels',
+        type: 'symbol',
+        source: 'protomaps',
+        'source-layer': 'places',
+        filter: ['==', ['get', 'kind'], 'state'],
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 2, 9, 5, 13, 8, 15],
+          'text-letter-spacing': 0.18,
+          'text-transform': 'uppercase',
+          'text-max-width': 7,
+        },
+        paint: {
+          'text-color': t.stateLabels,
+          'text-halo-color': t.labelHalo,
+          'text-halo-width': 1.5,
+          'text-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0.6, 6, 1, 9, 0.4],
+        }
+      },
+
+      // All cities and towns
+      {
+        id: 'place-labels',
+        type: 'symbol',
+        source: 'protomaps',
+        'source-layer': 'places',
+        filter: ['in', ['get', 'kind'], ['literal', ['city', 'town', 'village', 'hamlet']]],
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': ['interpolate', ['linear'], ['zoom'],
+            3, 9,
+            5, 11,
+            7, 12,
+            9, 14
+          ],
+          'text-anchor': 'top',
+          'text-offset': [0, 0.25],
+          'text-max-width': 8,
+        },
+        paint: {
+          'text-color': t.placeLabels,
+          'text-halo-color': t.labelHalo,
+          'text-halo-width': 1.2,
+        }
+      },
+    );
+
     return {
       version: 8,
-      // Protomaps CDN glyphs — enables all text symbol layers.
-      // Falls back gracefully (no text) if offline.
-      glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
+      glyphs: base + 'assets/fonts/glyphs/{fontstack}/{range}.pbf',
       sources: {
         protomaps: {
           type: 'vector',
@@ -96,138 +644,7 @@ const MAP = {
           attribution: '',
         },
       },
-      layers: [
-        // ---- BASE ----
-        {
-          id: 'background',
-          type: 'background',
-          paint: { 'background-color': '#071525' }
-        },
-        {
-          id: 'water',
-          type: 'fill',
-          source: 'protomaps',
-          'source-layer': 'water',
-          paint: { 'fill-color': '#09192e' }
-        },
-        {
-          id: 'land',
-          type: 'fill',
-          source: 'protomaps',
-          'source-layer': 'land',
-          paint: { 'fill-color': '#1e3550' }
-        },
-        {
-          id: 'landcover',
-          type: 'fill',
-          source: 'protomaps',
-          'source-layer': 'landcover',
-          paint: { 'fill-color': '#1a3048', 'fill-opacity': 0.5 }
-        },
-        {
-          id: 'countries',
-          type: 'line',
-          source: 'protomaps',
-          'source-layer': 'boundaries',
-          filter: ['==', ['get', 'kind'], 'country'],
-          paint: { 'line-color': '#5080a8', 'line-width': 1.2 }
-        },
-        {
-          id: 'states',
-          type: 'line',
-          source: 'protomaps',
-          'source-layer': 'boundaries',
-          filter: ['==', ['get', 'kind'], 'region'],
-          paint: { 'line-color': '#2e5070', 'line-width': 0.6, 'line-dasharray': [3, 3] }
-        },
-        {
-          id: 'roads',
-          type: 'line',
-          source: 'protomaps',
-          'source-layer': 'roads',
-          minzoom: 6,
-          paint: {
-            'line-color': '#243f5c',
-            'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.5]
-          }
-        },
-
-        // ---- LABELS (CDN glyphs — italic for water, upright for land) ----
-
-        // Oceans, seas, gulfs, lakes, rivers, bays
-        {
-          id: 'water-labels',
-          type: 'symbol',
-          source: 'protomaps',
-          'source-layer': 'places',
-          filter: ['in', ['get', 'kind'], ['literal',
-            ['ocean', 'sea', 'gulf', 'bay', 'strait', 'sound', 'lake', 'reservoir', 'river', 'canal', 'inlet']
-          ]],
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': ['interpolate', ['linear'], ['zoom'], 2, 10, 5, 13, 8, 15],
-            'text-letter-spacing': 0.12,
-            'text-max-width': 10,
-          },
-          paint: {
-            'text-color': '#4e8ab5',
-            'text-halo-color': '#071525',
-            'text-halo-width': 1.5,
-          }
-        },
-
-        // State / province names (visible at low zoom, fade out when zoomed in)
-        {
-          id: 'state-labels',
-          type: 'symbol',
-          source: 'protomaps',
-          'source-layer': 'places',
-          filter: ['==', ['get', 'kind'], 'state'],
-          maxzoom: 6.5,
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': ['interpolate', ['linear'], ['zoom'], 2, 9, 5, 13],
-            'text-letter-spacing': 0.18,
-            'text-transform': 'uppercase',
-            'text-max-width': 7,
-          },
-          paint: {
-            'text-color': '#3d6080',
-            'text-halo-color': '#071525',
-            'text-halo-width': 1.5,
-            'text-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0.6, 6, 1],
-          }
-        },
-
-        // All cities and towns (non-game cities show here; game cities get HTML markers on top)
-        {
-          id: 'place-labels',
-          type: 'symbol',
-          source: 'protomaps',
-          'source-layer': 'places',
-          filter: ['in', ['get', 'kind'], ['literal', ['city', 'town', 'village', 'hamlet']]],
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': ['interpolate', ['linear'], ['zoom'],
-              3, 9,
-              5, 11,
-              7, 12,
-              9, 14
-            ],
-            'text-anchor': 'top',
-            'text-offset': [0, 0.25],
-            'text-max-width': 8,
-          },
-          paint: {
-            'text-color': '#8ab0d0',
-            'text-halo-color': '#071525',
-            'text-halo-width': 1.2,
-          }
-        },
-      ],
+      layers,
     };
   },
 
@@ -251,6 +668,9 @@ const MAP = {
   },
 
   placePin(city, team) {
+    // Update city ownership for dot coloring
+    this.claimCity(city.id, team.color);
+
     const el = document.createElement('div');
     el.className = 'city-pin';
     el.style.cssText = `
@@ -312,7 +732,7 @@ const MAP = {
     return toDeg(Math.atan2(y, x));
   },
 
-  animateFlight(flight, onComplete) {
+  animateFlight(flight, team, onComplete) {
     const { origin, destination, airline } = flight;
     const map = this.instance;
 
@@ -349,32 +769,18 @@ const MAP = {
       }
     });
 
-    // SVG plane pointing NORTH (up) at 0°.
-    // Rotation is applied via SVG transform attribute (rotate(deg cx cy)) — this is
-    // immune to MapLibre's CSS transform on the marker wrapper, unlike style.transform.
-    const planeEl = document.createElement('div');
-    planeEl.style.cssText = 'filter:drop-shadow(0 0 6px rgba(240,165,0,0.8));display:block;width:28px;height:28px;';
-    const planeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    planeSvg.setAttribute('viewBox', '0 0 24 24');
-    planeSvg.setAttribute('width', '28');
-    planeSvg.setAttribute('height', '28');
-    planeSvg.innerHTML = `
-      <path d="M12 2 C10.5 2 10 4 10 6 L10 20 C10 21 11 22 12 22 C13 22 14 21 14 20 L14 6 C14 4 13.5 2 12 2Z" fill="#f0a500"/>
-      <polygon points="12,9 12,13 2,17 1,15" fill="#f0a500"/>
-      <polygon points="12,9 12,13 22,17 23,15" fill="#f0a500"/>
-      <polygon points="12,19 12,21 8,23 7,22" fill="#f0a500"/>
-      <polygon points="12,19 12,21 16,23 17,22" fill="#f0a500"/>
-    `;
-    // Set initial heading before first animation tick
-    if (gcPath.length >= 2) {
-      planeSvg.setAttribute('transform', `rotate(${this.bearingBetween(gcPath[0], gcPath[1])} 12 12)`);
-    }
-    planeEl.appendChild(planeSvg);
+    // Use the team's own marker as the flying plane
+    const teamMarker = this.teamMarkers[team.id];
+    const rotatorEl = teamMarker ? teamMarker.getElement().querySelector('.tm-rotator') : null;
 
-    if (this.planeMarker) this.planeMarker.remove();
-    this.planeMarker = new maplibregl.Marker({ element: planeEl, anchor: 'center' })
-      .setLngLat(gcPath[0])
-      .addTo(map);
+    // Set initial heading
+    if (gcPath.length >= 2 && rotatorEl) {
+      const initBearing = this.bearingBetween(gcPath[0], gcPath[1]);
+      rotatorEl.setAttribute('transform', `rotate(${initBearing} 16 16)`);
+    }
+
+    // Remove the old separate yellow plane marker if it exists
+    if (this.planeMarker) { this.planeMarker.remove(); this.planeMarker = null; }
 
     const duration = CONFIG.FLIGHT_DURATION_MS * (530 / airline.speed);
     let step = 0;
@@ -389,12 +795,14 @@ const MAP = {
         geometry: { type: 'LineString', coordinates: gcPath.slice(0, step + 1) }
       });
 
-      if (step > 0) {
+      // Rotate team marker to face direction of travel
+      if (step > 0 && rotatorEl) {
         const bearing = this.bearingBetween(gcPath[step - 1], pos);
-        // SVG transform: rotate(angleDeg centerX centerY) — rotates around viewBox center
-        planeSvg.setAttribute('transform', `rotate(${bearing} 12 12)`);
+        rotatorEl.setAttribute('transform', `rotate(${bearing} 16 16)`);
+        this.teamHeadings[team.id] = bearing;
       }
-      this.planeMarker.setLngLat(pos);
+      // Move team marker along the path
+      if (teamMarker) teamMarker.setLngLat(pos);
 
       // Smart zoom: pull back to show full route, then zoom into landing
       if (step === STEP_PULLBACK) {

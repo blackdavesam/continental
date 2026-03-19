@@ -111,23 +111,32 @@ const GAME = {
     const homeCityId = CONFIG.HOME_CITIES[Math.floor(Math.random() * CONFIG.HOME_CITIES.length)];
     this.homeCity = CITIES.find(c => c.id === homeCityId) || CITIES[0];
 
-    // Pick 3-4 airlines relevant to the home city, always include at least one major
+    // Pick 5-7 airlines so every route has at least 3 options, sometimes 4-5
     const allKeys = Object.keys(CONFIG.AIRLINE_POOL);
     const majors = ['delta', 'united', 'american'];
     const others = allKeys.filter(k => !majors.includes(k));
 
-    // Always include 1 random major
-    const selectedMajor = majors[Math.floor(Math.random() * majors.length)];
+    // Always include 2 random majors
+    const shuffledMajors = majors.sort(() => Math.random() - 0.5);
+    const selectedMajors = shuffledMajors.slice(0, 2);
 
-    // Pick 2 others that serve the home city's region
+    // Pick 3-4 others that serve the home city's region, plus 1 wildcard
     const homeAvailable = getAvailableAirlines(this.homeCity, this.homeCity);
     const relevantOthers = others
       .filter(k => homeAvailable.includes(k))
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 2);
+      .sort(() => Math.random() - 0.5);
+    const nonRelevant = others
+      .filter(k => !homeAvailable.includes(k))
+      .sort(() => Math.random() - 0.5);
+
+    // Take up to 4 relevant + 1 wildcard for variety
+    const selectedOthers = [
+      ...relevantOthers.slice(0, 4),
+      ...nonRelevant.slice(0, 1),
+    ];
 
     CONFIG.AIRLINE_MODIFIERS = {};
-    [selectedMajor, ...relevantOthers].forEach(k => {
+    [...selectedMajors, ...selectedOthers].forEach(k => {
       CONFIG.AIRLINE_MODIFIERS[k] = CONFIG.AIRLINE_POOL[k];
     });
 
@@ -254,7 +263,7 @@ const GAME = {
     const team = this.currentTeam;
     UI.hideBoardingPass();
     UI.showFlightOverlay(flight);
-    MAP.animateFlight(flight, () => {
+    MAP.animateFlight(flight, team, () => {
       this.landAtCity(flight.destination, team);
     });
   },
@@ -276,7 +285,14 @@ const GAME = {
     }
 
     MAP.placePin(city, team);
-    MAP.updateTeamMarker(team);
+    // Rotate team avatar to face the direction it arrived from
+    const heading = this.activeFlight
+      ? MAP.bearingBetween(
+          [this.activeFlight.origin.lng, this.activeFlight.origin.lat],
+          [city.lng, city.lat]
+        )
+      : undefined;
+    MAP.updateTeamMarker(team, heading);
     this.state = 'arrived';
     UI.showArrival(city, team, isNew, bonus);
     UI.updateTeamStrip();

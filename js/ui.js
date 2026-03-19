@@ -170,8 +170,8 @@ const UI = {
           .map(({ key, airline, cost }) => {
             const affordable = team.cash >= cost;
             const logoTag = CONFIG.AIRLINE_LOGOS[airline.logoKey]
-              ? `<img class="airline-logo-sm" src="${CONFIG.AIRLINE_LOGOS[airline.logoKey]}" alt="${airline.label}">`
-              : `<span class="airline-code">${airline.logoKey}</span>`;
+              ? `<img class="airline-logo-sm" src="${CONFIG.AIRLINE_LOGOS[airline.logoKey]}" alt="${airline.label}"><span class="airline-name-sm">${airline.label}</span>`
+              : `<span class="airline-code">${airline.logoKey}</span><span class="airline-name-sm">${airline.label}</span>`;
             return `<button class="airline-btn ${affordable ? '' : 'disabled'}"
               onclick="GAME.bookFlight('${c.id}', '${key}')"
               ${affordable ? '' : 'disabled'}
@@ -242,7 +242,7 @@ const UI = {
         <div class="bp-header">
           <div class="bp-logo-wrap">
             ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
-              ? `<img class="bp-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+              ? `<img class="bp-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}"><span class="bp-airline-name">${flight.airline.label}</span>`
               : `<span class="bp-airline">${flight.airline.label}</span>`}
           </div>
           <div class="bp-flight-num">Flight ${flight.flightNumber}</div>
@@ -290,7 +290,7 @@ const UI = {
         <div class="fs-header">
           <div class="fs-logo-wrap">
             ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
-              ? `<img class="fs-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+              ? `<img class="fs-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}"><span class="fs-airline-name">${flight.airline.label}</span>`
               : `<span class="fs-airline">${flight.airline.label}</span>`}
           </div>
           <span class="fs-flight">${flight.flightNumber}</span>

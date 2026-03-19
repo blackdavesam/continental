@@ -205,21 +205,14 @@ html, body {
   margin-top: 4px;
 }
 
-/* Team current-position avatar on the map */
+/* Team airplane avatar on the map */
 .team-map-marker {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 14px;
-  color: #fff;
+  width: 32px;
+  height: 32px;
+  display: block;
   cursor: default;
-  box-sizing: border-box;
-  transition: transform 0.3s ease;
+  pointer-events: auto;
+  z-index: 10;
 }
 
 /* Team strip */
@@ -530,9 +523,17 @@ html, body {
   padding: 5px 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
   min-width: 64px;
   height: 46px;
+}
+
+.bp-airline-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+  white-space: nowrap;
 }
 
 .bp-logo {
@@ -549,9 +550,17 @@ html, body {
   padding: 3px 8px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   min-width: 50px;
   height: 28px;
+}
+
+.fs-airline-name {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a1a2e;
+  white-space: nowrap;
 }
 
 .fs-logo {
@@ -572,6 +581,15 @@ html, body {
   background: white;
   border-radius: 2px;
   padding: 1px 3px;
+}
+
+.airline-name-sm {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 500;
+  color: inherit;
+  white-space: nowrap;
+  opacity: 0.85;
 }
 
 .bp-flight-num {
@@ -1315,6 +1333,38 @@ html, body {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.5; }
 }
+
+/* ============================================================
+   DAY/NIGHT TIME HUD
+   ============================================================ */
+#game-time-hud {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 15;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  pointer-events: none;
+  transition: background 0.6s, color 0.6s, box-shadow 0.6s;
+}
+
+#game-time-hud.night {
+  background: rgba(4,13,26,0.85);
+  color: #7ab090;
+  border: 0.5px solid rgba(90,144,96,0.3);
+  box-shadow: 0 0 12px rgba(255,221,136,0.08);
+}
+
+#game-time-hud.day {
+  background: rgba(184,212,227,0.85);
+  color: #4a3828;
+  border: 0.5px solid rgba(138,110,80,0.3);
+  box-shadow: 0 0 8px rgba(111,168,199,0.15);
+}
   </style>
 </head>
 <body>
@@ -1410,6 +1460,54 @@ html, body {
     <div class="overlay" id="overlay-win"></div>
 
   </div><!-- /screen-game -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
+
+  <!-- ========================================================
+       SCRIPTS — libs first, then game modules
+       ======================================================== -->
 
   <!-- ========================================================
        SCRIPTS — libs first, then game modules
@@ -3257,7 +3355,8 @@ return maplibregl$1;
 const CONFIG = {
 
   // --- MAP ---
-  MAP_THEME: 'dark',           // 'dark' | 'light' | 'night'
+  MAP_THEME: 'auto',            // 'auto' — simulated day/night cycle
+  DAY_NIGHT_CYCLE_MS: 300000,   // 5 minutes per full 24-hour in-game cycle
   MAP_STYLE_URL: '../north-america.pmtiles',
   GLYPH_URL: '../assets/fonts/glyphs/{fontstack}/{range}.pbf',
   MAP_CENTER: [-96, 48],
@@ -3359,12 +3458,12 @@ const CONFIG = {
     mexico_domestic:   { originCountries: ['MX'],      destCountries: ['MX'] },
 
     // Restricted regional coverage — checked separately by city id
-    us_pacific:        { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','portland'] },
-    us_canada_west:    { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','vancouver','calgary'] },
-    us_canada_east:    { allowedCityIds: ['new_york','boston','philadelphia','washington','chicago','toronto','montreal','ottawa'] },
-    canada_east:       { allowedCityIds: ['toronto','montreal','ottawa'] },
-    us_mexico_leisure: { allowedCityIds: ['miami','new_york','boston','chicago','dallas','houston','los_angeles','san_francisco','seattle','las_vegas','phoenix','denver','atlanta','cancun','mexico_city','guadalajara'] },
-    us_mexico_popular: { allowedCityIds: ['los_angeles','dallas','houston','chicago','las_vegas','san_francisco','phoenix','cancun','mexico_city','guadalajara'] },
+    us_pacific:        { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','portland','san_diego','honolulu','anchorage'] },
+    us_canada_west:    { allowedCityIds: ['seattle','san_francisco','los_angeles','las_vegas','phoenix','denver','portland','san_diego','anchorage','vancouver','calgary','edmonton','winnipeg'] },
+    us_canada_east:    { allowedCityIds: ['new_york','boston','philadelphia','washington','chicago','toronto','montreal','ottawa','pittsburgh','baltimore','hartford','hamilton','halifax','quebec_city'] },
+    canada_east:       { allowedCityIds: ['toronto','montreal','ottawa','hamilton','halifax','quebec_city'] },
+    us_mexico_leisure: { allowedCityIds: ['miami','new_york','boston','chicago','dallas','houston','los_angeles','san_francisco','seattle','las_vegas','phoenix','denver','atlanta','tampa','orlando','jacksonville','san_antonio','austin','san_diego','cancun','mexico_city','guadalajara','puerto_vallarta','merida','monterrey','tijuana'] },
+    us_mexico_popular: { allowedCityIds: ['los_angeles','dallas','houston','chicago','las_vegas','san_francisco','phoenix','san_antonio','san_diego','cancun','mexico_city','guadalajara','monterrey','tijuana','puebla'] },
   },
 
   // Active airlines for this game — populated at game start from AIRLINE_POOL
@@ -3386,6 +3485,7 @@ const CONFIG = {
   HOME_CITIES: [
     'toronto', 'chicago', 'los_angeles', 'miami',
     'seattle', 'new_york', 'mexico_city', 'montreal',
+    'vancouver', 'dallas', 'denver', 'cancun',
   ],
 
   // --- WIN CONDITIONS (randomly drawn at game start) ---
@@ -3449,6 +3549,57 @@ const CITIES = [
   { id: 'mexico_city',  name: 'Mexico City',   country: 'MX', region: 'mexico',       lat: 19.432, lng: -99.133, population: 9210000, tags: ['landlocked', 'population_1m'], airport: 'MEX', dossier: { tagline: 'Ancient heart of the Americas', didYouKnow: "Mexico City is sinking by up to 20cm a year — it was built on a drained lake." } },
   { id: 'cancun',       name: 'Cancún',        country: 'MX', region: 'mexico',       lat: 21.161, lng: -86.851, population: 888000,  tags: ['coastal'],              airport: 'CUN', dossier: { tagline: 'Caribbean turquoise on Mexican shores', didYouKnow: "Cancún was a tiny island of 117 people in 1970. The Mexican government planned it entirely from scratch." } },
   { id: 'guadalajara',  name: 'Guadalajara',   country: 'MX', region: 'mexico',       lat: 20.659, lng: -103.35, population: 1495000, tags: ['landlocked', 'population_1m'], airport: 'GDL', dossier: { tagline: 'Birthplace of mariachi and tequila', didYouKnow: "Tequila can only legally be produced in a small region around Guadalajara." } },
+
+  // === NEW CITIES ===
+
+  // --- CANADA (5 new) ---
+  { id: 'edmonton',     name: 'Edmonton',      country: 'CA', region: 'prairies',     lat: 53.546, lng: -113.49, population: 1010000, tags: ['canada', 'landlocked', 'population_1m'], airport: 'YEG', dossier: { tagline: 'Gateway to the Canadian North', didYouKnow: "Edmonton is the northernmost city in North America with a population over one million." } },
+  { id: 'winnipeg',     name: 'Winnipeg',      country: 'CA', region: 'prairies',     lat: 49.895, lng: -97.138, population: 749000,  tags: ['canada', 'landlocked'], airport: 'YWG', dossier: { tagline: 'Heart of the continent', didYouKnow: "Winnipeg is the Slurpee capital of the world — it sells more than any other city, even in winter." } },
+  { id: 'halifax',      name: 'Halifax',       country: 'CA', region: 'northeast',    lat: 44.648, lng: -63.575, population: 439000,  tags: ['canada', 'coastal'],    airport: 'YHZ', dossier: { tagline: "The Atlantic's front porch", didYouKnow: "Halifax played a central role in the Titanic disaster — most of the recovered victims are buried here." } },
+  { id: 'quebec_city',  name: 'Quebec City',   country: 'CA', region: 'northeast',    lat: 46.813, lng: -71.208, population: 549000,  tags: ['canada'],               airport: 'YQB', dossier: { tagline: 'A piece of old France in North America', didYouKnow: "Quebec City is the only walled city north of Mexico — its fortifications date to the 1600s." } },
+  { id: 'hamilton',     name: 'Hamilton',      country: 'CA', region: 'great_lakes',  lat: 43.255, lng: -79.871, population: 569000,  tags: ['canada'],               airport: 'YHM', dossier: { tagline: 'Steel city with a waterfall heart', didYouKnow: "Hamilton has over 100 waterfalls — more than any other city in the world." } },
+
+  // --- USA NORTHEAST (3 new) ---
+  { id: 'pittsburgh',   name: 'Pittsburgh',    country: 'US', region: 'northeast',    lat: 40.440, lng: -79.995, population: 302000,  tags: ['landlocked'],           airport: 'PIT', dossier: { tagline: 'Steel city reborn as a tech hub', didYouKnow: "Pittsburgh has 446 bridges — more than any other city in the world, including Venice." } },
+  { id: 'baltimore',    name: 'Baltimore',     country: 'US', region: 'northeast',    lat: 39.290, lng: -76.612, population: 585000,  tags: ['coastal'],              airport: 'BWI', dossier: { tagline: 'Charm City on the Chesapeake', didYouKnow: "Baltimore is home to the first passenger railroad in the United States — the B&O Railroad." } },
+  { id: 'hartford',     name: 'Hartford',      country: 'US', region: 'northeast',    lat: 41.763, lng: -72.685, population: 121000,  tags: ['landlocked'],           airport: 'BDL', dossier: { tagline: 'Insurance capital of the world', didYouKnow: "Mark Twain wrote his most famous novels while living in Hartford, Connecticut." } },
+
+  // --- USA SOUTHEAST (3 new) ---
+  { id: 'tampa',        name: 'Tampa',         country: 'US', region: 'southeast',    lat: 27.950, lng: -82.457, population: 384000,  tags: ['coastal'],              airport: 'TPA', dossier: { tagline: 'Sun, sea, and the Sunshine Skyway', didYouKnow: "Tampa hosts the largest pirate invasion in the world every year — Gasparilla." } },
+  { id: 'jacksonville', name: 'Jacksonville',  country: 'US', region: 'southeast',    lat: 30.332, lng: -81.655, population: 949000,  tags: ['coastal'],              airport: 'JAX', dossier: { tagline: 'The biggest city you haven\'t explored', didYouKnow: "Jacksonville is the largest city by area in the contiguous United States." } },
+  { id: 'orlando',      name: 'Orlando',       country: 'US', region: 'southeast',    lat: 28.538, lng: -81.379, population: 307000,  tags: ['landlocked'],           airport: 'MCO', dossier: { tagline: 'Theme park capital of the world', didYouKnow: "Orlando welcomes more than 75 million visitors a year — more than any other US city." } },
+
+  // --- USA MIDWEST (5 new) ---
+  { id: 'kansas_city',  name: 'Kansas City',   country: 'US', region: 'midwest',      lat: 39.099, lng: -94.578, population: 508000,  tags: ['landlocked'],           airport: 'MCI', dossier: { tagline: 'Barbecue, jazz, and fountains', didYouKnow: "Kansas City has more fountains than any city except Rome." } },
+  { id: 'cincinnati',   name: 'Cincinnati',    country: 'US', region: 'midwest',      lat: 39.103, lng: -84.512, population: 309000,  tags: ['landlocked'],           airport: 'CVG', dossier: { tagline: 'Queen City on the Ohio River', didYouKnow: "Cincinnati was the first US city to build a professional baseball team — the Red Stockings in 1869." } },
+  { id: 'indianapolis', name: 'Indianapolis',  country: 'US', region: 'midwest',      lat: 39.768, lng: -86.158, population: 887000,  tags: ['landlocked'],           airport: 'IND', dossier: { tagline: 'Crossroads of America', didYouKnow: "The Indianapolis 500 is the largest single-day sporting event in the world." } },
+  { id: 'milwaukee',    name: 'Milwaukee',     country: 'US', region: 'great_lakes',  lat: 43.038, lng: -87.906, population: 577000,  tags: ['coastal'],              airport: 'MKE', dossier: { tagline: 'Brew City on Lake Michigan', didYouKnow: "Milwaukee once had more breweries per capita than any city in the world." } },
+  { id: 'columbus',     name: 'Columbus',      country: 'US', region: 'midwest',      lat: 39.961, lng: -82.998, population: 905000,  tags: ['landlocked'],           airport: 'CMH', dossier: { tagline: "Ohio's rising capital", didYouKnow: "Columbus is the largest city in Ohio and one of the fastest-growing in the Midwest." } },
+
+  // --- USA SOUTH (3 new) ---
+  { id: 'austin',       name: 'Austin',        country: 'US', region: 'south',        lat: 30.267, lng: -97.743, population: 978000,  tags: ['landlocked'],           airport: 'AUS', dossier: { tagline: 'Keep Austin weird', didYouKnow: "Austin is the live music capital of the world, with more than 250 live music venues." } },
+  { id: 'san_antonio',  name: 'San Antonio',   country: 'US', region: 'south',        lat: 29.424, lng: -98.493, population: 1434000, tags: ['landlocked', 'population_1m'], airport: 'SAT', dossier: { tagline: 'Remember the Alamo', didYouKnow: "San Antonio's River Walk is 15 miles long and sits 20 feet below street level." } },
+  { id: 'memphis',      name: 'Memphis',       country: 'US', region: 'south',        lat: 35.149, lng: -90.048, population: 633000,  tags: ['landlocked'],           airport: 'MEM', dossier: { tagline: 'Home of the Blues and birthplace of Rock \'n\' Roll', didYouKnow: "FedEx chose Memphis as its hub because it sits at the geographic center of the United States." } },
+
+  // --- USA MOUNTAIN (3 new) ---
+  { id: 'salt_lake_city', name: 'Salt Lake City', country: 'US', region: 'mountain',  lat: 40.760, lng: -111.89, population: 200000,  tags: ['landlocked'],           airport: 'SLC', dossier: { tagline: 'Mountain oasis by the Great Salt Lake', didYouKnow: "The Great Salt Lake is so salty that you can float in it without trying." } },
+  { id: 'albuquerque',  name: 'Albuquerque',   country: 'US', region: 'mountain',     lat: 35.084, lng: -106.65, population: 564000,  tags: ['landlocked'],           airport: 'ABQ', dossier: { tagline: 'Hot air balloon capital of the world', didYouKnow: "Albuquerque hosts the world's largest hot air balloon festival every October." } },
+  { id: 'tucson',       name: 'Tucson',        country: 'US', region: 'mountain',     lat: 32.221, lng: -110.97, population: 542000,  tags: ['landlocked'],           airport: 'TUS', dossier: { tagline: 'The Old Pueblo', didYouKnow: "Tucson has been continuously inhabited for over 4,000 years — longer than any other city in North America." } },
+
+  // --- USA PACIFIC (3 new) ---
+  { id: 'portland',     name: 'Portland',      country: 'US', region: 'pacific',      lat: 45.505, lng: -122.68, population: 652000,  tags: ['coastal'],              airport: 'PDX', dossier: { tagline: 'Keep Portland weird', didYouKnow: "Portland has more breweries per capita than any other city in the world." } },
+  { id: 'san_diego',    name: 'San Diego',     country: 'US', region: 'pacific',      lat: 32.715, lng: -117.16, population: 1386000, tags: ['coastal', 'population_1m'], airport: 'SAN', dossier: { tagline: "America's Finest City", didYouKnow: "San Diego has the most perfect weather of any US city — averaging 266 sunny days per year." } },
+  { id: 'honolulu',     name: 'Honolulu',      country: 'US', region: 'pacific',      lat: 21.306, lng: -157.86, population: 350000,  tags: ['coastal'],              airport: 'HNL', dossier: { tagline: 'Paradise in the middle of the Pacific', didYouKnow: "Honolulu is the most isolated major city on Earth — 2,390 miles from the nearest mainland." } },
+  { id: 'anchorage',    name: 'Anchorage',     country: 'US', region: 'pacific',      lat: 61.218, lng: -149.90, population: 291000,  tags: ['coastal'],              airport: 'ANC', dossier: { tagline: "Alaska's urban frontier", didYouKnow: "Anchorage receives 19 hours of daylight on the summer solstice and only 5.5 hours in winter." } },
+
+  // --- MEXICO (7 new) ---
+  { id: 'monterrey',    name: 'Monterrey',     country: 'MX', region: 'mexico',       lat: 25.686, lng: -100.31, population: 1135000, tags: ['landlocked', 'population_1m'], airport: 'MTY', dossier: { tagline: 'Industrial powerhouse of Mexico', didYouKnow: "Monterrey produces more steel than any other city in Latin America." } },
+  { id: 'tijuana',      name: 'Tijuana',       country: 'MX', region: 'mexico',       lat: 32.514, lng: -117.03, population: 1922000, tags: ['coastal', 'population_1m'],    airport: 'TIJ', dossier: { tagline: 'The busiest border crossing on Earth', didYouKnow: "The San Ysidro port of entry between Tijuana and San Diego sees over 70,000 crossings per day." } },
+  { id: 'puerto_vallarta', name: 'Puerto Vallarta', country: 'MX', region: 'mexico',  lat: 20.653, lng: -105.22, population: 291000,  tags: ['coastal'],              airport: 'PVR', dossier: { tagline: 'Pacific jewel of the Mexican Riviera', didYouKnow: "Puerto Vallarta became famous after Elizabeth Taylor and Richard Burton filmed Night of the Iguana here in 1964." } },
+  { id: 'merida',       name: 'Mérida',        country: 'MX', region: 'mexico',       lat: 20.967, lng: -89.592, population: 995000,  tags: ['landlocked'],           airport: 'MID', dossier: { tagline: 'White City of the Yucatán', didYouKnow: "Mérida was built on top of the ancient Maya city of T'hó and is one of the oldest cities in the Americas." } },
+  { id: 'puebla',       name: 'Puebla',        country: 'MX', region: 'mexico',       lat: 19.041, lng: -98.206, population: 1576000, tags: ['landlocked', 'population_1m'], airport: 'PBC', dossier: { tagline: 'City of Angels and tiles', didYouKnow: "Puebla is where Cinco de Mayo actually happened — a Mexican victory over the French army in 1862." } },
+  { id: 'leon',         name: 'León',          country: 'MX', region: 'mexico',       lat: 21.125, lng: -101.68, population: 1579000, tags: ['landlocked', 'population_1m'], airport: 'BJX', dossier: { tagline: 'Shoe capital of the world', didYouKnow: "León produces more shoes than any other city on Earth — over 60 million pairs per year." } },
+  { id: 'oaxaca',       name: 'Oaxaca',        country: 'MX', region: 'mexico',       lat: 17.073, lng: -96.726, population: 300000,  tags: ['landlocked'],           airport: 'OAX', dossier: { tagline: 'Where ancient cultures and mezcal meet', didYouKnow: "Oaxaca is the birthplace of mezcal and has the most diverse cuisine in all of Mexico." } },
 ];
 
 // ============================================================
@@ -3641,6 +3792,40 @@ const QUESTIONS = [
 //  MapLibre + PMTiles map logic
 // ============================================================
 
+// --- Day/Night Color Palettes ---
+const MAP_THEMES = {
+  day: {
+    background:   '#b8d4e3',
+    water:        '#6fa8c7',
+    land:         '#c8b99a',
+    landcover:    '#a3b87c',
+    countries:    '#8a6e50',
+    states:       '#a89880',
+    roads:        '#b8a890',
+    waterLabels:  '#2a6090',
+    stateLabels:  '#6b5a48',
+    placeLabels:  '#4a3828',
+    labelHalo:    'rgba(200,185,154,0.7)',
+    cityDotColor: '#7a6a55',   // neutral brown dot for unclaimed cities
+    sweepColor:   'rgba(4,13,26,0.92)',  // dark sweep for day→night
+  },
+  night: {
+    background:   '#040d1a',
+    water:        '#071428',
+    land:         '#1a2d1e',
+    landcover:    '#1e3524',
+    countries:    '#5a9060',
+    states:       '#2a4a30',
+    roads:        '#1e3020',
+    waterLabels:  '#4e8ab5',
+    stateLabels:  '#3a6840',
+    placeLabels:  '#7ab090',
+    labelHalo:    '#040d1a',
+    cityDotColor: '#ffdd88',   // warm glow for unclaimed cities
+    sweepColor:   'rgba(184,212,227,0.92)', // light sweep for night→day
+  },
+};
+
 const MAP = {
   instance: null,
   pins: [],
@@ -3648,6 +3833,18 @@ const MAP = {
   planeMarker: null,
   cityLabelMarkers: [],   // HTML markers for city names (offline)
   teamMarkers: {},        // teamId → maplibregl.Marker (current position)
+  teamHeadings: {},       // teamId → bearing in degrees (0 = north)
+
+  // Day/night cycle state
+  currentTheme: 'day',
+  gameHour: 8,            // simulated in-game hour (0–23)
+  _cycleInterval: null,
+  _pmtilesUrl: null,
+  _base: null,
+  _transitioning: false,  // true during day/night sweep animation
+
+  // City ownership: cityId → team.color (set when a team visits)
+  _cityOwners: {},
 
   async init() {
     if (this.instance) return;
@@ -3659,11 +3856,16 @@ const MAP = {
     );
 
     // Resolve paths relative to the HTML file
-    const base = window.location.href.replace(/\/[^/]*$/, '/');
-    const pmtilesUrl = base + 'north-america.pmtiles';
+    this._base = window.location.href.replace(/\/[^/]*$/, '/');
+    this._pmtilesUrl = this._base + 'north-america.pmtiles';
+
+    // Pick initial theme based on a random starting hour
+    this.gameHour = Math.floor(Math.random() * 24);
+    this.currentTheme = this._isNightHour(this.gameHour) ? 'night' : 'day';
+
     this.instance = new maplibregl.Map({
       container: 'map',
-      style: this.buildStyle(pmtilesUrl),
+      style: this.buildStyle(this._pmtilesUrl, this._base, this.currentTheme),
       center: CONFIG.MAP_CENTER,
       zoom: CONFIG.MAP_ZOOM,
       attributionControl: false,
@@ -3679,12 +3881,24 @@ const MAP = {
       setTimeout(resolve, 8000);
     });
 
-    // Place HTML city-name labels for all 28 game cities (fully offline)
+    // Place HTML city-name labels for all game cities (fully offline)
     this.addCityLabels();
+
+    // Add city dots/lights
+    this._addCityOverlays();
 
     // Hide loading indicator
     const loader = document.getElementById('map-loading');
     if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 500); }
+
+    // Ensure sweep overlay exists
+    this._ensureSweepOverlay();
+
+    // Start the simulated day/night clock
+    this.startDayNightClock();
+
+    // Show initial time indicator
+    this._updateTimeHUD();
 
     return this;
   },
@@ -3701,32 +3915,517 @@ const MAP = {
     });
   },
 
-  // Place or move a team's current-position avatar on the map.
-  updateTeamMarker(team) {
+  // Place or move a team's current-position airplane avatar on the map.
+  // heading: bearing in degrees (0=north, 90=east, etc). If omitted, keeps previous heading.
+  updateTeamMarker(team, heading) {
     if (!this.instance || !team.currentCity) return;
     const { lng, lat } = team.currentCity;
 
+    if (heading !== undefined) {
+      this.teamHeadings[team.id] = heading;
+    }
+    const deg = this.teamHeadings[team.id] || 0;
+
     if (this.teamMarkers[team.id]) {
       this.teamMarkers[team.id].setLngLat([lng, lat]);
+      // Update rotation on the SVG group
+      const g = this.teamMarkers[team.id].getElement().querySelector('.tm-rotator');
+      if (g) g.setAttribute('transform', `rotate(${deg} 16 16)`);
     } else {
       const el = document.createElement('div');
       el.className = 'team-map-marker';
-      el.style.background = team.color;
-      el.style.boxShadow = `0 0 10px ${team.color}88`;
-      el.textContent = team.name.charAt(0).toUpperCase();
       el.title = team.name;
-      this.teamMarkers[team.id] = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      el.innerHTML = `<svg viewBox="0 0 32 32" width="32" height="32">
+        <defs>
+          <filter id="glow-${team.id}" x="-40%" y="-40%" width="180%" height="180%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="${team.color}" flood-opacity="0.7"/>
+          </filter>
+        </defs>
+        <g class="tm-rotator" transform="rotate(${deg} 16 16)">
+          <g filter="url(#glow-${team.id})">
+            <path d="M16 4 C14.5 4 14 5.5 14 7 L14 13 L6 17 L6 19 L14 17 L14 23 L11 25 L11 27 L16 26 L21 27 L21 25 L18 23 L18 17 L26 19 L26 17 L18 13 L18 7 C18 5.5 17.5 4 16 4Z"
+              fill="${team.color}" stroke="rgba(255,255,255,0.9)" stroke-width="0.8"/>
+          </g>
+          <text x="16" y="16" text-anchor="middle" dominant-baseline="central"
+            font-size="8" font-weight="bold" fill="white" font-family="sans-serif"
+            style="text-shadow:0 0 2px rgba(0,0,0,0.6)">${team.name.charAt(0).toUpperCase()}</text>
+        </g>
+      </svg>`;
+      this.teamMarkers[team.id] = new maplibregl.Marker({ element: el, anchor: 'center', pitchAlignment: 'map' })
         .setLngLat([lng, lat])
         .addTo(this.instance);
     }
   },
 
-  buildStyle(pmtilesUrl) {
+  // --- Day/Night helpers ---
+  _isNightHour(h) {
+    return h >= 19 || h < 7; // Night: 7PM–6:59AM
+  },
+
+  _formatGameTime(h) {
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${h12}:00 ${ampm}`;
+  },
+
+  _updateTimeHUD() {
+    let el = document.getElementById('game-time-hud');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'game-time-hud';
+      const gameScreen = document.getElementById('screen-game');
+      if (gameScreen) gameScreen.appendChild(el);
+    }
+    const isNight = this._isNightHour(this.gameHour);
+    const icon = isNight ? '🌙' : '☀️';
+    el.textContent = `${icon} ${this._formatGameTime(this.gameHour)}`;
+    el.className = isNight ? 'time-hud night' : 'time-hud day';
+  },
+
+  // ============================================================
+  //  CITY DOTS (day) & CITY LIGHTS (night)
+  // ============================================================
+
+  // Deterministic pseudo-random from seed string
+  _seededRandom(seed) {
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) {
+      h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
+    }
+    return () => {
+      h = (h * 16807 + 0) % 2147483647;
+      return (h & 0x7fffffff) / 2147483647;
+    };
+  },
+
+  // Generate scatter light points around a city for the night satellite look
+  _generateScatterPoints(city) {
+    const rng = this._seededRandom(city.id);
+    const pop = city.population || 100000;
+    // More populous cities get more scatter dots
+    const count = Math.min(25, Math.max(4, Math.round(Math.log10(pop) * 4)));
+    // Spread radius scales with population (in degrees, ~0.05–0.3)
+    const spread = Math.min(0.3, Math.max(0.05, Math.log10(pop) * 0.04));
+    const pts = [];
+    for (let i = 0; i < count; i++) {
+      const angle = rng() * Math.PI * 2;
+      const dist = rng() * spread;
+      pts.push({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [city.lng + Math.cos(angle) * dist, city.lat + Math.sin(angle) * dist * 0.7]
+        },
+        properties: { type: 'scatter', brightness: 0.3 + rng() * 0.5 },
+      });
+    }
+    return pts;
+  },
+
+  // Build the GeoJSON data for city markers
+  _buildCityGeoJSON() {
+    const cities = typeof CITIES !== 'undefined' ? CITIES : [];
+    const features = [];
+
+    cities.forEach(c => {
+      const ownerColor = this._cityOwners[c.id] || null;
+      // Main city point
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [c.lng, c.lat] },
+        properties: {
+          type: 'city',
+          name: c.name,
+          pop: c.population || 100000,
+          color: ownerColor || '',   // '' = unclaimed
+          id: c.id,
+        },
+      });
+
+      // Scatter points for night mode (always include; layer visibility controls them)
+      const scatter = this._generateScatterPoints(c);
+      features.push(...scatter);
+    });
+
+    return { type: 'FeatureCollection', features };
+  },
+
+  // Add city dot/light layers after map style loads
+  _addCityOverlays() {
+    if (!this.instance) return;
+    const map = this.instance;
+    const isNight = this.currentTheme === 'night';
+    const t = MAP_THEMES[this.currentTheme];
+
+    if (map.getSource('city-overlay-src')) return;
+
+    map.addSource('city-overlay-src', {
+      type: 'geojson',
+      data: this._buildCityGeoJSON(),
+    });
+
+    // Determine the "before" layer — insert before water-labels if it exists
+    const before = map.getLayer('water-labels') ? 'water-labels' : undefined;
+
+    if (isNight) {
+      // --- NIGHT MODE ---
+
+      // Scatter glow dots (the small ambient lights around cities)
+      map.addLayer({
+        id: 'city-scatter',
+        type: 'circle',
+        source: 'city-overlay-src',
+        filter: ['==', ['get', 'type'], 'scatter'],
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 0.8, 5, 1.5, 8, 3],
+          'circle-color': '#ffcc66',
+          'circle-blur': 0.4,
+          'circle-opacity': ['get', 'brightness'],
+        }
+      }, before);
+
+      // Outer soft glow for main cities
+      map.addLayer({
+        id: 'city-glow',
+        type: 'circle',
+        source: 'city-overlay-src',
+        filter: ['==', ['get', 'type'], 'city'],
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 8, 5, 16, 8, 28],
+          'circle-color': '#ffcc44',
+          'circle-blur': 1,
+          'circle-opacity': 0.25,
+        }
+      }, before);
+
+      // Bright core for main cities (uses team color if claimed, else warm yellow)
+      map.addLayer({
+        id: 'city-core',
+        type: 'circle',
+        source: 'city-overlay-src',
+        filter: ['==', ['get', 'type'], 'city'],
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 2.5, 5, 5, 8, 8],
+          'circle-color': [
+            'case',
+            ['!=', ['get', 'color'], ''], ['get', 'color'],
+            t.cityDotColor
+          ],
+          'circle-blur': 0.2,
+          'circle-opacity': 0.9,
+        }
+      }, before);
+
+    } else {
+      // --- DAY MODE ---
+
+      // Simple solid dot for each city (team color if claimed, neutral brown if not)
+      map.addLayer({
+        id: 'city-dot',
+        type: 'circle',
+        source: 'city-overlay-src',
+        filter: ['==', ['get', 'type'], 'city'],
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 3, 5, 5, 8, 7],
+          'circle-color': [
+            'case',
+            ['!=', ['get', 'color'], ''], ['get', 'color'],
+            t.cityDotColor
+          ],
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': 'rgba(255,255,255,0.7)',
+          'circle-opacity': 0.85,
+        }
+      }, before);
+    }
+  },
+
+  // Remove all city overlay layers
+  _removeCityOverlays() {
+    if (!this.instance) return;
+    const map = this.instance;
+    ['city-scatter', 'city-glow', 'city-core', 'city-dot'].forEach(id => {
+      try { map.removeLayer(id); } catch(e) {}
+    });
+    try { map.removeSource('city-overlay-src'); } catch(e) {}
+  },
+
+  // Call when a city is claimed by a team — updates the dot color
+  claimCity(cityId, teamColor) {
+    this._cityOwners[cityId] = teamColor;
+    // Update GeoJSON source if it exists
+    if (this.instance) {
+      const src = this.instance.getSource('city-overlay-src');
+      if (src) src.setData(this._buildCityGeoJSON());
+    }
+  },
+
+  // ============================================================
+  //  DAY/NIGHT SWEEP TRANSITION
+  // ============================================================
+
+  _ensureSweepOverlay() {
+    if (document.getElementById('day-night-sweep')) return;
+    const el = document.createElement('div');
+    el.id = 'day-night-sweep';
+    const mapEl = document.getElementById('map');
+    if (mapEl) mapEl.parentElement.appendChild(el);
+  },
+
+  // Animated east-to-west sweep for day↔night transition
+  _playSweep(toTheme, onMidpoint) {
+    const sweep = document.getElementById('day-night-sweep');
+    if (!sweep) { onMidpoint(); return; }
+
+    // Color of the incoming theme (what we're transitioning TO)
+    const color = toTheme === 'night'
+      ? 'rgba(4,13,26,0.94)'    // dark curtain for nightfall
+      : 'rgba(200,212,220,0.94)'; // light curtain for dawn
+
+    sweep.style.cssText = `
+      position: absolute; inset: 0; z-index: 3; pointer-events: none;
+      background: linear-gradient(to left,
+        ${color} 0%, ${color} 50%,
+        transparent 70%, transparent 100%
+      );
+      transform: translateX(110%);
+    `;
+    sweep.offsetHeight; // force reflow
+
+    // Phase 1: sweep in from right (east) → cover map
+    sweep.style.transition = 'transform 1.2s ease-in';
+    sweep.style.transform = 'translateX(-10%)';
+
+    // At midpoint (~1s), swap the style underneath
+    setTimeout(() => {
+      onMidpoint();
+    }, 900);
+
+    // Phase 2: continue sweeping left → reveal new style
+    setTimeout(() => {
+      sweep.style.transition = 'transform 1.2s ease-out';
+      sweep.style.transform = 'translateX(-120%)';
+    }, 1300);
+
+    // Cleanup
+    setTimeout(() => {
+      sweep.style.cssText = 'position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;';
+    }, 2600);
+  },
+
+  // ============================================================
+  //  DAY/NIGHT CLOCK
+  // ============================================================
+
+  startDayNightClock() {
+    if (this._cycleInterval) clearInterval(this._cycleInterval);
+
+    // Full cycle = 5 min (300,000ms) = 24 in-game hours
+    // Each in-game hour = 300000/24 ≈ 12500ms
+    const msPerHour = (CONFIG.DAY_NIGHT_CYCLE_MS || 300000) / 24;
+
+    this._cycleInterval = setInterval(() => {
+      const prevTheme = this.currentTheme;
+      this.gameHour = (this.gameHour + 1) % 24;
+      const newTheme = this._isNightHour(this.gameHour) ? 'night' : 'day';
+
+      this._updateTimeHUD();
+
+      if (newTheme !== prevTheme && !this._transitioning) {
+        this.setTheme(newTheme);
+      }
+    }, msPerHour);
+  },
+
+  stopDayNightClock() {
+    if (this._cycleInterval) {
+      clearInterval(this._cycleInterval);
+      this._cycleInterval = null;
+    }
+  },
+
+  setTheme(theme) {
+    if (!this.instance || theme === this.currentTheme) return;
+    this._transitioning = true;
+
+    this._playSweep(theme, () => {
+      // --- Midpoint: swap style under the sweep ---
+      this.currentTheme = theme;
+
+      const center = this.instance.getCenter();
+      const zoom = this.instance.getZoom();
+
+      const newStyle = this.buildStyle(this._pmtilesUrl, this._base, theme);
+      this.instance.setStyle(newStyle);
+
+      this.instance.once('style.load', () => {
+        this.instance.setCenter(center);
+        this.instance.setZoom(zoom);
+
+        // Re-add city labels
+        this.cityLabelMarkers.forEach(el => el.remove?.());
+        this.cityLabelMarkers = [];
+        this.addCityLabels();
+
+        // Re-add city overlays (dots or lights depending on theme)
+        this._addCityOverlays();
+
+        // Re-add team markers
+        Object.values(this.teamMarkers).forEach(m => m.addTo(this.instance));
+
+        // Re-add pins
+        this.pins.forEach(p => {
+          new maplibregl.Marker({ element: p.el })
+            .setLngLat([p.city.lng, p.city.lat])
+            .addTo(this.instance);
+        });
+
+        this._transitioning = false;
+      });
+    });
+  },
+
+  buildStyle(pmtilesUrl, base, theme) {
+    const t = MAP_THEMES[theme] || MAP_THEMES.night;
+
+    const layers = [
+      // ---- BASE ----
+      {
+        id: 'background',
+        type: 'background',
+        paint: { 'background-color': t.background }
+      },
+      {
+        id: 'water',
+        type: 'fill',
+        source: 'protomaps',
+        'source-layer': 'water',
+        paint: { 'fill-color': t.water }
+      },
+      {
+        id: 'land',
+        type: 'fill',
+        source: 'protomaps',
+        'source-layer': 'land',
+        paint: { 'fill-color': t.land }
+      },
+      {
+        id: 'landcover',
+        type: 'fill',
+        source: 'protomaps',
+        'source-layer': 'landcover',
+        paint: { 'fill-color': t.landcover, 'fill-opacity': 0.5 }
+      },
+      {
+        id: 'countries',
+        type: 'line',
+        source: 'protomaps',
+        'source-layer': 'boundaries',
+        filter: ['==', ['get', 'kind'], 'country'],
+        paint: { 'line-color': t.countries, 'line-width': 1.2 }
+      },
+      {
+        id: 'states',
+        type: 'line',
+        source: 'protomaps',
+        'source-layer': 'boundaries',
+        filter: ['==', ['get', 'kind'], 'region'],
+        paint: { 'line-color': t.states, 'line-width': 0.6, 'line-dasharray': [3, 3] }
+      },
+      {
+        id: 'roads',
+        type: 'line',
+        source: 'protomaps',
+        'source-layer': 'roads',
+        minzoom: 6,
+        paint: {
+          'line-color': t.roads,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.5]
+        }
+      },
+    ];
+
+    // City overlays are added dynamically via _addCityOverlays() after style loads
+
+    // ---- LABELS ----
+    layers.push(
+      // Oceans, seas, gulfs, lakes, rivers, bays
+      {
+        id: 'water-labels',
+        type: 'symbol',
+        source: 'protomaps',
+        'source-layer': 'places',
+        filter: ['in', ['get', 'kind'], ['literal',
+          ['ocean', 'sea', 'gulf', 'bay', 'strait', 'sound', 'lake', 'reservoir', 'river', 'canal', 'inlet']
+        ]],
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 2, 10, 5, 13, 8, 15],
+          'text-letter-spacing': 0.12,
+          'text-max-width': 10,
+        },
+        paint: {
+          'text-color': t.waterLabels,
+          'text-halo-color': t.labelHalo,
+          'text-halo-width': 1.5,
+        }
+      },
+
+      // State / province names (always visible, fade slightly when zoomed in)
+      {
+        id: 'state-labels',
+        type: 'symbol',
+        source: 'protomaps',
+        'source-layer': 'places',
+        filter: ['==', ['get', 'kind'], 'state'],
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 2, 9, 5, 13, 8, 15],
+          'text-letter-spacing': 0.18,
+          'text-transform': 'uppercase',
+          'text-max-width': 7,
+        },
+        paint: {
+          'text-color': t.stateLabels,
+          'text-halo-color': t.labelHalo,
+          'text-halo-width': 1.5,
+          'text-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0.6, 6, 1, 9, 0.4],
+        }
+      },
+
+      // All cities and towns
+      {
+        id: 'place-labels',
+        type: 'symbol',
+        source: 'protomaps',
+        'source-layer': 'places',
+        filter: ['in', ['get', 'kind'], ['literal', ['city', 'town', 'village', 'hamlet']]],
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': ['interpolate', ['linear'], ['zoom'],
+            3, 9,
+            5, 11,
+            7, 12,
+            9, 14
+          ],
+          'text-anchor': 'top',
+          'text-offset': [0, 0.25],
+          'text-max-width': 8,
+        },
+        paint: {
+          'text-color': t.placeLabels,
+          'text-halo-color': t.labelHalo,
+          'text-halo-width': 1.2,
+        }
+      },
+    );
+
     return {
       version: 8,
-      // Protomaps CDN glyphs — enables all text symbol layers.
-      // Falls back gracefully (no text) if offline.
-      glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
+      glyphs: base + 'assets/fonts/glyphs/{fontstack}/{range}.pbf',
       sources: {
         protomaps: {
           type: 'vector',
@@ -3734,138 +4433,7 @@ const MAP = {
           attribution: '',
         },
       },
-      layers: [
-        // ---- BASE ----
-        {
-          id: 'background',
-          type: 'background',
-          paint: { 'background-color': '#071525' }
-        },
-        {
-          id: 'water',
-          type: 'fill',
-          source: 'protomaps',
-          'source-layer': 'water',
-          paint: { 'fill-color': '#09192e' }
-        },
-        {
-          id: 'land',
-          type: 'fill',
-          source: 'protomaps',
-          'source-layer': 'land',
-          paint: { 'fill-color': '#1e3550' }
-        },
-        {
-          id: 'landcover',
-          type: 'fill',
-          source: 'protomaps',
-          'source-layer': 'landcover',
-          paint: { 'fill-color': '#1a3048', 'fill-opacity': 0.5 }
-        },
-        {
-          id: 'countries',
-          type: 'line',
-          source: 'protomaps',
-          'source-layer': 'boundaries',
-          filter: ['==', ['get', 'kind'], 'country'],
-          paint: { 'line-color': '#5080a8', 'line-width': 1.2 }
-        },
-        {
-          id: 'states',
-          type: 'line',
-          source: 'protomaps',
-          'source-layer': 'boundaries',
-          filter: ['==', ['get', 'kind'], 'region'],
-          paint: { 'line-color': '#2e5070', 'line-width': 0.6, 'line-dasharray': [3, 3] }
-        },
-        {
-          id: 'roads',
-          type: 'line',
-          source: 'protomaps',
-          'source-layer': 'roads',
-          minzoom: 6,
-          paint: {
-            'line-color': '#243f5c',
-            'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.5]
-          }
-        },
-
-        // ---- LABELS (CDN glyphs — italic for water, upright for land) ----
-
-        // Oceans, seas, gulfs, lakes, rivers, bays
-        {
-          id: 'water-labels',
-          type: 'symbol',
-          source: 'protomaps',
-          'source-layer': 'places',
-          filter: ['in', ['get', 'kind'], ['literal',
-            ['ocean', 'sea', 'gulf', 'bay', 'strait', 'sound', 'lake', 'reservoir', 'river', 'canal', 'inlet']
-          ]],
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': ['interpolate', ['linear'], ['zoom'], 2, 10, 5, 13, 8, 15],
-            'text-letter-spacing': 0.12,
-            'text-max-width': 10,
-          },
-          paint: {
-            'text-color': '#4e8ab5',
-            'text-halo-color': '#071525',
-            'text-halo-width': 1.5,
-          }
-        },
-
-        // State / province names (visible at low zoom, fade out when zoomed in)
-        {
-          id: 'state-labels',
-          type: 'symbol',
-          source: 'protomaps',
-          'source-layer': 'places',
-          filter: ['==', ['get', 'kind'], 'state'],
-          maxzoom: 6.5,
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': ['interpolate', ['linear'], ['zoom'], 2, 9, 5, 13],
-            'text-letter-spacing': 0.18,
-            'text-transform': 'uppercase',
-            'text-max-width': 7,
-          },
-          paint: {
-            'text-color': '#3d6080',
-            'text-halo-color': '#071525',
-            'text-halo-width': 1.5,
-            'text-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0.6, 6, 1],
-          }
-        },
-
-        // All cities and towns (non-game cities show here; game cities get HTML markers on top)
-        {
-          id: 'place-labels',
-          type: 'symbol',
-          source: 'protomaps',
-          'source-layer': 'places',
-          filter: ['in', ['get', 'kind'], ['literal', ['city', 'town', 'village', 'hamlet']]],
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': ['interpolate', ['linear'], ['zoom'],
-              3, 9,
-              5, 11,
-              7, 12,
-              9, 14
-            ],
-            'text-anchor': 'top',
-            'text-offset': [0, 0.25],
-            'text-max-width': 8,
-          },
-          paint: {
-            'text-color': '#8ab0d0',
-            'text-halo-color': '#071525',
-            'text-halo-width': 1.2,
-          }
-        },
-      ],
+      layers,
     };
   },
 
@@ -3889,6 +4457,9 @@ const MAP = {
   },
 
   placePin(city, team) {
+    // Update city ownership for dot coloring
+    this.claimCity(city.id, team.color);
+
     const el = document.createElement('div');
     el.className = 'city-pin';
     el.style.cssText = `
@@ -3950,7 +4521,7 @@ const MAP = {
     return toDeg(Math.atan2(y, x));
   },
 
-  animateFlight(flight, onComplete) {
+  animateFlight(flight, team, onComplete) {
     const { origin, destination, airline } = flight;
     const map = this.instance;
 
@@ -3987,32 +4558,18 @@ const MAP = {
       }
     });
 
-    // SVG plane pointing NORTH (up) at 0°.
-    // Rotation is applied via SVG transform attribute (rotate(deg cx cy)) — this is
-    // immune to MapLibre's CSS transform on the marker wrapper, unlike style.transform.
-    const planeEl = document.createElement('div');
-    planeEl.style.cssText = 'filter:drop-shadow(0 0 6px rgba(240,165,0,0.8));display:block;width:28px;height:28px;';
-    const planeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    planeSvg.setAttribute('viewBox', '0 0 24 24');
-    planeSvg.setAttribute('width', '28');
-    planeSvg.setAttribute('height', '28');
-    planeSvg.innerHTML = `
-      <path d="M12 2 C10.5 2 10 4 10 6 L10 20 C10 21 11 22 12 22 C13 22 14 21 14 20 L14 6 C14 4 13.5 2 12 2Z" fill="#f0a500"/>
-      <polygon points="12,9 12,13 2,17 1,15" fill="#f0a500"/>
-      <polygon points="12,9 12,13 22,17 23,15" fill="#f0a500"/>
-      <polygon points="12,19 12,21 8,23 7,22" fill="#f0a500"/>
-      <polygon points="12,19 12,21 16,23 17,22" fill="#f0a500"/>
-    `;
-    // Set initial heading before first animation tick
-    if (gcPath.length >= 2) {
-      planeSvg.setAttribute('transform', `rotate(${this.bearingBetween(gcPath[0], gcPath[1])} 12 12)`);
-    }
-    planeEl.appendChild(planeSvg);
+    // Use the team's own marker as the flying plane
+    const teamMarker = this.teamMarkers[team.id];
+    const rotatorEl = teamMarker ? teamMarker.getElement().querySelector('.tm-rotator') : null;
 
-    if (this.planeMarker) this.planeMarker.remove();
-    this.planeMarker = new maplibregl.Marker({ element: planeEl, anchor: 'center' })
-      .setLngLat(gcPath[0])
-      .addTo(map);
+    // Set initial heading
+    if (gcPath.length >= 2 && rotatorEl) {
+      const initBearing = this.bearingBetween(gcPath[0], gcPath[1]);
+      rotatorEl.setAttribute('transform', `rotate(${initBearing} 16 16)`);
+    }
+
+    // Remove the old separate yellow plane marker if it exists
+    if (this.planeMarker) { this.planeMarker.remove(); this.planeMarker = null; }
 
     const duration = CONFIG.FLIGHT_DURATION_MS * (530 / airline.speed);
     let step = 0;
@@ -4027,12 +4584,14 @@ const MAP = {
         geometry: { type: 'LineString', coordinates: gcPath.slice(0, step + 1) }
       });
 
-      if (step > 0) {
+      // Rotate team marker to face direction of travel
+      if (step > 0 && rotatorEl) {
         const bearing = this.bearingBetween(gcPath[step - 1], pos);
-        // SVG transform: rotate(angleDeg centerX centerY) — rotates around viewBox center
-        planeSvg.setAttribute('transform', `rotate(${bearing} 12 12)`);
+        rotatorEl.setAttribute('transform', `rotate(${bearing} 16 16)`);
+        this.teamHeadings[team.id] = bearing;
       }
-      this.planeMarker.setLngLat(pos);
+      // Move team marker along the path
+      if (teamMarker) teamMarker.setLngLat(pos);
 
       // Smart zoom: pull back to show full route, then zoom into landing
       if (step === STEP_PULLBACK) {
@@ -4260,8 +4819,8 @@ const UI = {
           .map(({ key, airline, cost }) => {
             const affordable = team.cash >= cost;
             const logoTag = CONFIG.AIRLINE_LOGOS[airline.logoKey]
-              ? `<img class="airline-logo-sm" src="${CONFIG.AIRLINE_LOGOS[airline.logoKey]}" alt="${airline.label}">`
-              : `<span class="airline-code">${airline.logoKey}</span>`;
+              ? `<img class="airline-logo-sm" src="${CONFIG.AIRLINE_LOGOS[airline.logoKey]}" alt="${airline.label}"><span class="airline-name-sm">${airline.label}</span>`
+              : `<span class="airline-code">${airline.logoKey}</span><span class="airline-name-sm">${airline.label}</span>`;
             return `<button class="airline-btn ${affordable ? '' : 'disabled'}"
               onclick="GAME.bookFlight('${c.id}', '${key}')"
               ${affordable ? '' : 'disabled'}
@@ -4332,7 +4891,7 @@ const UI = {
         <div class="bp-header">
           <div class="bp-logo-wrap">
             ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
-              ? `<img class="bp-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+              ? `<img class="bp-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}"><span class="bp-airline-name">${flight.airline.label}</span>`
               : `<span class="bp-airline">${flight.airline.label}</span>`}
           </div>
           <div class="bp-flight-num">Flight ${flight.flightNumber}</div>
@@ -4380,7 +4939,7 @@ const UI = {
         <div class="fs-header">
           <div class="fs-logo-wrap">
             ${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]
-              ? `<img class="fs-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}">`
+              ? `<img class="fs-logo" src="${CONFIG.AIRLINE_LOGOS[flight.airline.logoKey]}" alt="${flight.airline.label}"><span class="fs-airline-name">${flight.airline.label}</span>`
               : `<span class="fs-airline">${flight.airline.label}</span>`}
           </div>
           <span class="fs-flight">${flight.flightNumber}</span>
@@ -4772,23 +5331,32 @@ const GAME = {
     const homeCityId = CONFIG.HOME_CITIES[Math.floor(Math.random() * CONFIG.HOME_CITIES.length)];
     this.homeCity = CITIES.find(c => c.id === homeCityId) || CITIES[0];
 
-    // Pick 3-4 airlines relevant to the home city, always include at least one major
+    // Pick 5-7 airlines so every route has at least 3 options, sometimes 4-5
     const allKeys = Object.keys(CONFIG.AIRLINE_POOL);
     const majors = ['delta', 'united', 'american'];
     const others = allKeys.filter(k => !majors.includes(k));
 
-    // Always include 1 random major
-    const selectedMajor = majors[Math.floor(Math.random() * majors.length)];
+    // Always include 2 random majors
+    const shuffledMajors = majors.sort(() => Math.random() - 0.5);
+    const selectedMajors = shuffledMajors.slice(0, 2);
 
-    // Pick 2 others that serve the home city's region
+    // Pick 3-4 others that serve the home city's region, plus 1 wildcard
     const homeAvailable = getAvailableAirlines(this.homeCity, this.homeCity);
     const relevantOthers = others
       .filter(k => homeAvailable.includes(k))
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 2);
+      .sort(() => Math.random() - 0.5);
+    const nonRelevant = others
+      .filter(k => !homeAvailable.includes(k))
+      .sort(() => Math.random() - 0.5);
+
+    // Take up to 4 relevant + 1 wildcard for variety
+    const selectedOthers = [
+      ...relevantOthers.slice(0, 4),
+      ...nonRelevant.slice(0, 1),
+    ];
 
     CONFIG.AIRLINE_MODIFIERS = {};
-    [selectedMajor, ...relevantOthers].forEach(k => {
+    [...selectedMajors, ...selectedOthers].forEach(k => {
       CONFIG.AIRLINE_MODIFIERS[k] = CONFIG.AIRLINE_POOL[k];
     });
 
@@ -4915,7 +5483,7 @@ const GAME = {
     const team = this.currentTeam;
     UI.hideBoardingPass();
     UI.showFlightOverlay(flight);
-    MAP.animateFlight(flight, () => {
+    MAP.animateFlight(flight, team, () => {
       this.landAtCity(flight.destination, team);
     });
   },
@@ -4937,7 +5505,14 @@ const GAME = {
     }
 
     MAP.placePin(city, team);
-    MAP.updateTeamMarker(team);
+    // Rotate team avatar to face the direction it arrived from
+    const heading = this.activeFlight
+      ? MAP.bearingBetween(
+          [this.activeFlight.origin.lng, this.activeFlight.origin.lat],
+          [city.lng, city.lat]
+        )
+      : undefined;
+    MAP.updateTeamMarker(team, heading);
     this.state = 'arrived';
     UI.showArrival(city, team, isNew, bonus);
     UI.updateTeamStrip();
@@ -4993,7 +5568,12 @@ CONFIG.AIRLINE_LOGOS = {
   "JBU": "data:image/png;base64,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",
   "ASA": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAABaCAMAAAAPdrEwAAADAFBMVEVHcEz///8LQ2hEqMSTz5hFqcVEqMVMos5p//YRSW0/a4kYT3Ky1n0AAJPn7/EVS24XTW9Nd5Pr8/R8m65SepQVVHjO2+EKQWbv9fYxYIHD0tpDb42Lp7j0+flVfZg6Z4dghp6ZssGqv8tEqMREp8Kx1XwiVXXR3uNagZpFqcYhaoyO/7wORGgpWXorW3s3ZITi6+5Fq8c9nbtMpLs4lbQkb5HK1940Y4OdtcOmvckmV3n8/v5dhJyzxtDU4ea/z9jG1d1GrMlEqsSCob1Fq8dHp8H//wCBn7Kww84uXn8dUHOGorTe5+wgU3VIc4+1yNIodpdFqcWXsL9ojasfZYdFqcay1n1GcI9MdJBwkqe6zNUyiKc2jqxFrMg2krFGq8ZkiaeqqnlFqca02H2w1X11laq3ydNGrcpJf6IvhKMcYINEqcVGq8hFqMcZWn1Co79AoL07mbZnlHMrfJ1muLFtj6WZzJGVr76t0n+ku8iw1X6iyHuiuMVGq8dGrMlGrclEqcZRxcZEqcJ4mbaPq7tFq8dEqMRukq+v03yp04WKxpt4v6Wiz4i22IK33YGw1HxZsbaSrLxmiqGjucdFqsWw1Y+62Xew1H+t03xMfXCy1n2vz39FqcVRsMDc5uqQuHi22Xw9b25EqsYvX35FqsYoU3FrubGExaaOyaCq15av1X6pzXw+p8um0oSsz32v032v1H6z134uf50LQ2j6/v5FqcX///8LRGkORmoMRWkORWr2+/sNRGkIQWb5/f0HP2VJsMwJQmcFPmQGPGH3/PwHQGUCPGJEqMQMRWr6/f0ANFxEp8QDPWMAOF8AOWEBO2IAN14ORmoBOmGGo8AGPWIMRGgANl0QR2v4/fz+///1+vqTrslHrclHrsr4/Pz4/v0AMlpIr8v7//6JpsNKtdRIss9GrMj8//9GqsWQrMcALVb9/v5Gq8e734GNqcVJtNIAKVNLt9YJQ2iw1X2/4X9CrM642Xg8pcnA54e224C95Ia63H3F6IKHxJrE5X8+qMxUff7ZAAAA33RSTlMA/v7+A/78AwH+/f7+Af7+/v3+/f39/f7+/f39/f79/f39/fv++/7+/fv9Av79/v39mf4L/v39/f39/v79/f39/fxY/iQZAf39/v39/f79/f14/f398tb9/f39/f2P/UL9A0z+cf399gL9/eHHE/3+/v39/v39+vwJ/KT+/anU5mcHN/39MLX9j/31/f4g+zH+/f39gxjnRGL86BDm/f393v3Q/bjwosDaJ77+/gs7R8e2/P/////////////////////////////////////////////////////////+oyhS/QAADWdJREFUeJytmXd0E1e+x+9YErYEkbvlJhfAxuBGLwlgQyheE0og9EACBOL0Hpb0vpuewGazLWR32d33dt/b3ffeWHeKRpE0GhVstSOL8bjKlnHBNaElhGTfnjuysY1GYOfk9wcHY+kzv/O931+ZCwA/JArl6M+1r+ybt+8Xd64++NqatY8sWLDmnoMHDx685801MeJnxI9MNqoKAQBrVs97uVMMU7NuxvbfPfS77V0t7S0tXbLtf3zrjw/fufYHgGOiAXhz30uzh842y6agkMl0/V3NLc39OplCIVPo+k1Dps6vts+bNDkagDdfXHW2vWfKbJluJBQymWzmzFoUdrtMMUUxZUbX0ORTfmTeqiHdDIXiGlen09lre1pMoWjut4uPmDljcuQqAFa/fFY3ZSwWgbtMM/c/tWjOnEVb9i58rFl8RIt9UuRCsGBeZ/OMMVC73V5rbzbN3zJVYxHDr4l9dNFTWxbN2d8+uZzXPnx2yjUl7LW6rpb2dlPzE3NIi5VwUBRFOQjcwIrP0Dw4GXL02peGrqVcq2s3yeYvvHvvlkejLGYHgV8LgnI4KAfunzj5lmjw1tkRcq3OpLh7TjKpMfotLE6Ncsc8YRI5g9Wdw+RaXXvPA8msxWrGCWJswuNiomA5AK+sWoWcbK/tN/XvTbYYCSoSdBLoqmgA1rzY2SNDnmgxPfZAst8YMdnJoG9B4H33D8lkOl1tc/P+OUqLkbgpeCLoGADWzLv/bM8Unc6uMy180Ggx3ESJiaJjwIJ99w/1IDvbe5q3aPyEpB9+ADom+tWHv1LMEPtPs+JBXxQTNdG4GVoO5n01QzSG3TQ/2eKYYMYTyDoa3Hl2tljVPe0PUOxkyDdBy8HqztmoadR2KeZYzBM6vYmho8Fr94tlUtvyWLKFOoMTjPnHQReCNS+3hMjz4/wOHGcMTvJHQVfFLHipE3X92pYnlEYHjhOsMiuNnbAqkckx0VV/Entobcv8ENmYNrjNeOZH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",
   "NKS": "data:image/png;base64,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",
-  "FFT": "data:image/png;base64,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"
+  "FFT": "data:image/png;base64,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",
+  "ACA": "data:image/png;base64,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",
+  "WJA": "data:image/png;base64,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",
+  "POE": "data:image/png;base64,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",
+  "AMX": "data:image/png;base64,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",
+  "VOI": "data:image/png;base64,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"
 };
   </script>
   <script>

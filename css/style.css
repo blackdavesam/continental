@@ -195,21 +195,14 @@ html, body {
   margin-top: 4px;
 }
 
-/* Team current-position avatar on the map */
+/* Team airplane avatar on the map */
 .team-map-marker {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 14px;
-  color: #fff;
+  width: 32px;
+  height: 32px;
+  display: block;
   cursor: default;
-  box-sizing: border-box;
-  transition: transform 0.3s ease;
+  pointer-events: auto;
+  z-index: 10;
 }
 
 /* Team strip */
@@ -520,9 +513,17 @@ html, body {
   padding: 5px 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
   min-width: 64px;
   height: 46px;
+}
+
+.bp-airline-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+  white-space: nowrap;
 }
 
 .bp-logo {
@@ -539,9 +540,17 @@ html, body {
   padding: 3px 8px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   min-width: 50px;
   height: 28px;
+}
+
+.fs-airline-name {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a1a2e;
+  white-space: nowrap;
 }
 
 .fs-logo {
@@ -562,6 +571,15 @@ html, body {
   background: white;
   border-radius: 2px;
   padding: 1px 3px;
+}
+
+.airline-name-sm {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 500;
+  color: inherit;
+  white-space: nowrap;
+  opacity: 0.85;
 }
 
 .bp-flight-num {
@@ -1304,5 +1322,37 @@ html, body {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.5; }
+}
+
+/* ============================================================
+   DAY/NIGHT TIME HUD
+   ============================================================ */
+#game-time-hud {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 15;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  pointer-events: none;
+  transition: background 0.6s, color 0.6s, box-shadow 0.6s;
+}
+
+#game-time-hud.night {
+  background: rgba(4,13,26,0.85);
+  color: #7ab090;
+  border: 0.5px solid rgba(90,144,96,0.3);
+  box-shadow: 0 0 12px rgba(255,221,136,0.08);
+}
+
+#game-time-hud.day {
+  background: rgba(184,212,227,0.85);
+  color: #4a3828;
+  border: 0.5px solid rgba(138,110,80,0.3);
+  box-shadow: 0 0 8px rgba(111,168,199,0.15);
 }
 

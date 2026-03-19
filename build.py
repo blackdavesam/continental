@@ -35,6 +35,11 @@ AIRLINE_LOGO_FILES = {
     'ASA': 'airline-logos-main/flightaware_logos/ASA.png',   # Alaska
     'NKS': 'airline-logos-main/flightaware_logos/NKS.png',   # Spirit
     'FFT': 'airline-logos-main/flightaware_logos/FFT.png',   # Frontier
+    'ACA': 'airline-logos-main/flightaware_logos/ACA.png',   # Air Canada
+    'WJA': 'airline-logos-main/flightaware_logos/WJA.png',   # WestJet
+    'POE': 'airline-logos-main/flightaware_logos/POE.png',   # Porter
+    'AMX': 'airline-logos-main/flightaware_logos/AMX.png',   # Aeroméxico
+    'VOI': 'airline-logos-main/flightaware_logos/VOI.png',   # Volaris
 }
 
 
