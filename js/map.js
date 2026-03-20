@@ -102,8 +102,8 @@ const MAP = {
     const loader = document.getElementById('map-loading');
     if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 500); }
 
-    // Ensure sweep overlay exists
-    this._ensureSweepOverlay();
+    // Ensure fade overlay exists
+    this._ensureFadeOverlay();
 
     // Start the simulated day/night clock
     this.startDayNightClock();
@@ -375,53 +375,51 @@ const MAP = {
   //  DAY/NIGHT SWEEP TRANSITION
   // ============================================================
 
-  _ensureSweepOverlay() {
-    if (document.getElementById('day-night-sweep')) return;
+  _ensureFadeOverlay() {
+    if (document.getElementById('day-night-fade')) return;
     const el = document.createElement('div');
-    el.id = 'day-night-sweep';
+    el.id = 'day-night-fade';
+    el.style.cssText = 'position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;';
     const mapEl = document.getElementById('map');
     if (mapEl) mapEl.parentElement.appendChild(el);
   },
 
-  // Animated east-to-west sweep for day↔night transition
-  _playSweep(toTheme, onMidpoint) {
-    const sweep = document.getElementById('day-night-sweep');
-    if (!sweep) { onMidpoint(); return; }
+  // Smooth crossfade for day↔night transition
+  _playFade(toTheme, onMidpoint) {
+    const fade = document.getElementById('day-night-fade');
+    if (!fade) { onMidpoint(); return; }
 
-    // Color of the incoming theme (what we're transitioning TO)
-    const color = toTheme === 'night'
-      ? 'rgba(4,13,26,0.94)'    // dark curtain for nightfall
-      : 'rgba(200,212,220,0.94)'; // light curtain for dawn
+    // Pick a color that blends between old and new theme
+    const bg = toTheme === 'night'
+      ? 'rgba(4,13,26,0.95)'      // dark wash for nightfall
+      : 'rgba(200,215,228,0.95)'; // light wash for dawn
 
-    sweep.style.cssText = `
-      position: absolute; inset: 0; z-index: 3; pointer-events: none;
-      background: linear-gradient(to left,
-        ${color} 0%, ${color} 50%,
-        transparent 70%, transparent 100%
-      );
-      transform: translateX(110%);
+    fade.style.cssText = `
+      position:absolute; inset:0; z-index:3; pointer-events:none;
+      background: ${bg};
+      opacity: 0;
+      transition: opacity 1.4s ease-in-out;
     `;
-    sweep.offsetHeight; // force reflow
+    fade.offsetHeight; // force reflow
 
-    // Phase 1: sweep in from right (east) → cover map
-    sweep.style.transition = 'transform 1.2s ease-in';
-    sweep.style.transform = 'translateX(-10%)';
+    // Phase 1: fade in (covers the map)
+    fade.style.opacity = '1';
 
-    // At midpoint (~1s), swap the style underneath
+    // At peak opacity, swap the style underneath
     setTimeout(() => {
       onMidpoint();
-    }, 900);
+    }, 1400);
 
-    // Phase 2: continue sweeping left → reveal new style
+    // Phase 2: fade out (reveals new style)
     setTimeout(() => {
-      sweep.style.transition = 'transform 1.2s ease-out';
-      sweep.style.transform = 'translateX(-120%)';
-    }, 1300);
+      fade.style.transition = 'opacity 1.6s ease-in-out';
+      fade.style.opacity = '0';
+    }, 1800);
 
     // Cleanup
     setTimeout(() => {
-      sweep.style.cssText = 'position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;';
-    }, 2600);
+      fade.style.cssText = 'position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;';
+    }, 3500);
   },
 
   // ============================================================
@@ -459,7 +457,7 @@ const MAP = {
     if (!this.instance || theme === this.currentTheme) return;
     this._transitioning = true;
 
-    this._playSweep(theme, () => {
+    this._playFade(theme, () => {
       // --- Midpoint: swap style under the sweep ---
       this.currentTheme = theme;
 
