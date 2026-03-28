@@ -1,0 +1,316 @@
+[
+  {
+    "_id": "58",
+    "name": "Brasilia Cathedral",
+    "city": "Brasilia",
+    "country": "Brazil",
+    "category": "Landmarks",
+    "tags": [
+      "cathedral",
+      "modern",
+      "architecture"
+    ],
+    "svgFilename": "br-brasilia.svg",
+    "description": "Brasilia is the capital city of Brazil, known for its iconic Cathedral of Brasilia - a stunning modernist church designed by Oscar Niemeyer. The city is a UNESCO World Heritage site, featuring innovative modernist architecture, the distinctive hyperboloid cathedral structure, and the unique urban planning of the 1960s.",
+    "region": "South America"
+  },
+  {
+    "_id": "34",
+    "name": "Buenos Aires Tango",
+    "city": "Buenos Aires",
+    "country": "Argentina",
+    "category": "Culture",
+    "tags": [
+      "tango",
+      "historic",
+      "latin"
+    ],
+    "svgFilename": "ar-buenos-aires.svg",
+    "description": "Buenos Aires is the capital and largest city of Argentina, known for its passionate tango culture, historic neighborhoods like La Boca and San Telmo, and European-style architecture. The city is the cultural heart of Argentina and a major Latin American metropolis.",
+    "region": "South America"
+  },
+  {
+    "_id": "50",
+    "name": "Cusco Inca Wall",
+    "city": "Cusco",
+    "country": "Peru",
+    "category": "Landmarks",
+    "tags": [
+      "inca",
+      "wall",
+      "historic"
+    ],
+    "svgFilename": "pe-cusco.svg",
+    "description": "Cusco is a historic city in southeastern Peru, once the capital of the Inca Empire. Known for its impressive Inca stone walls and architecture, the city features the famous Twelve-Angled Stone and other remarkable examples of Inca masonry. Cusco combines ancient Andean heritage with Spanish colonial architecture.",
+    "region": "South America"
+  },
+  {
+    "_id": "48",
+    "name": "Rio de Janeiro Christ the Redeemer",
+    "city": "Rio de Janeiro",
+    "country": "Brazil",
+    "category": "Landmarks",
+    "tags": [
+      "christ",
+      "statue",
+      "iconic"
+    ],
+    "svgFilename": "br-rio-de-janeiro.svg",
+    "description": "Rio de Janeiro is a vibrant coastal city in Brazil, known for its iconic Christ the Redeemer statue atop Corcovado Mountain, beautiful beaches like Copacabana and Ipanema, and the famous Sugarloaf Mountain. The city combines stunning natural beauty with rich Brazilian culture and Carnival celebrations.",
+    "region": "South America"
+  },
+  {
+    "_id": "86",
+    "name": "Santiago Metropolitan Cathedral",
+    "city": "Santiago",
+    "country": "Chile",
+    "category": "Landmarks",
+    "tags": [
+      "cathedral",
+      "religious",
+      "historic"
+    ],
+    "svgFilename": "cl-santiago.svg",
+    "description": "Santiago is the capital and largest city of Chile, known for its historic Metropolitan Cathedral and rich cultural heritage. The city combines colonial architecture with modern development, featuring the Plaza de Armas, Cerro San Cristóbal, and vibrant cultural scene.",
+    "region": "South America"
+  },
+  {
+    "_id": "114",
+    "name": "São Paulo Sé Metropolitan Cathedral",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "category": "Landmarks",
+    "tags": [
+      "cathedral",
+      "se",
+      "metropolitan",
+      "gothic",
+      "religious"
+    ],
+    "svgFilename": "br-sao-paulo.svg",
+    "description": "São Paulo is the largest city in Brazil and the Americas, known for its iconic Sé Metropolitan Cathedral - a stunning neo-Gothic cathedral in the heart of the city. The city combines modern skyscrapers with historic architecture, featuring the famous Paulista Avenue, the beautiful Ibirapuera Park, the historic downtown area, and vibrant multicultural scene.",
+    "region": "South America"
+  },
+  {
+    "_id": "164",
+    "name": "Montevideo Sun of May",
+    "city": "Montevideo",
+    "country": "Uruguay",
+    "category": "Culture",
+    "tags": [
+      "sun-of-may",
+      "national-symbol",
+      "uruguayan",
+      "independence",
+      "patriotic"
+    ],
+    "svgFilename": "uy-montevideo.svg",
+    "description": "Montevideo is the capital and largest city of Uruguay, known for its iconic Sun of May symbol that appears on both the Uruguayan and Argentine flags. This golden sun represents independence and freedom, commemorating the May Revolution and serving as a powerful symbol of South American liberation and national identity.",
+    "region": "South America"
+  },
+  {
+    "_id": "166",
+    "name": "Lima Francisco Pizarro Statue",
+    "city": "Lima",
+    "country": "Peru",
+    "category": "Landmarks",
+    "tags": [
+      "statue",
+      "francisco-pizarro",
+      "conquistador",
+      "historical",
+      "equestrian",
+      "colonial"
+    ],
+    "svgFilename": "pe-lima.svg",
+    "description": "Lima, the capital of Peru, features the equestrian statue of Francisco Pizarro, the Spanish conquistador who founded the city in 1535. This monument represents Lima's colonial heritage and its role as the former capital of the Spanish Viceroyalty of Peru, marking the beginning of Spanish influence in South America.",
+    "region": "South America"
+  },
+  {
+    "_id": "218",
+    "name": "Córdoba City Arch",
+    "city": "Córdoba",
+    "country": "Argentina",
+    "category": "Landmarks",
+    "tags": [
+      "arch",
+      "triumphal",
+      "towers",
+      "medieval",
+      "romanesque"
+    ],
+    "svgFilename": "ar-cordoba.svg",
+    "description": "Córdoba is represented by its distinctive city arch, a triumphal monument that features two Spanish medieval-style towers with strong reminiscences of Romanesque art. The design draws the shield of the City of Córdoba twice and joins them with a bow, creating an eclectic and characteristic arch. Each tower stands 18.6 meters high with a 6-meter diameter, connected by a bridge that forms this unique architectural symbol of the city.",
+    "region": "South America"
+  },
+  {
+    "_id": "243",
+    "name": "Bogotá Cathedral",
+    "city": "Bogotá",
+    "country": "Colombia",
+    "category": "Landmarks",
+    "tags": [
+      "cathedral",
+      "religious",
+      "colonial",
+      "historic",
+      "architecture"
+    ],
+    "svgFilename": "co-bogota.svg",
+    "description": "Bogotá is the capital and largest city of Colombia, known for its stunning Primatial Cathedral located on the historic Plaza Bolívar. This impressive neoclassical cathedral, one of the largest in South America, represents the spiritual heart of the nation and reflects Colombia's rich colonial heritage. The city combines historic charm with modern development, featuring the colorful La Candelaria district and vibrant cultural scene.",
+    "region": "South America"
+  },
+  {
+    "_id": "244",
+    "name": "Medellín Cable Car",
+    "city": "Medellín",
+    "country": "Colombia",
+    "category": "Landmarks",
+    "tags": [
+      "cable-car",
+      "metrocable",
+      "transportation",
+      "urban",
+      "innovation"
+    ],
+    "svgFilename": "co-medellin.svg",
+    "description": "Medellín is Colombia's second-largest city, famous for its innovative Metrocable system - an aerial cable car network that connects hillside neighborhoods to the city center. This pioneering urban transportation solution has become a symbol of Medellín's remarkable transformation from a troubled past to a model of urban innovation and social inclusion, earning the city international recognition for its creative approach to public transit.",
+    "region": "South America"
+  },
+  {
+    "_id": "245",
+    "name": "Cartagena Pedro de Heredia Statue",
+    "city": "Cartagena",
+    "country": "Colombia",
+    "category": "Landmarks",
+    "tags": [
+      "statue",
+      "pedro-de-heredia",
+      "founder",
+      "colonial",
+      "historic"
+    ],
+    "svgFilename": "co-cartagena.svg",
+    "description": "Cartagena is a stunning Caribbean coastal city in Colombia, known for its beautifully preserved colonial architecture and the statue of Pedro de Heredia, the Spanish conquistador who founded the city in 1533. The monument stands as a testament to Cartagena's colonial origins, while the city itself enchants visitors with its colorful walled Old Town, a UNESCO World Heritage site, romantic plazas, and vibrant Caribbean culture.",
+    "region": "South America"
+  },
+  {
+    "_id": "250",
+    "name": "Ushuaia Penguin",
+    "city": "Ushuaia",
+    "country": "Argentina",
+    "category": "Culture",
+    "tags": [
+      "penguin",
+      "wildlife",
+      "patagonia",
+      "end-of-the-world",
+      "nature"
+    ],
+    "svgFilename": "ar-ushuaia.svg",
+    "description": "Ushuaia is the southernmost city in the world, located in Argentine Patagonia at the tip of South America. Known as the 'End of the World,' this remote city is famous for its colonies of Magellanic and gentoo penguins that inhabit the nearby islands and coastlines. The penguin has become a beloved symbol of Ushuaia, representing the city's unique position as a gateway to Antarctica and its extraordinary subpolar wildlife.",
+    "region": "South America"
+  },
+  {
+    "_id": "254",
+    "name": "Georgetown St. George's Cathedral",
+    "city": "Georgetown",
+    "country": "Guyana",
+    "category": "Landmarks",
+    "tags": [
+      "cathedral",
+      "wooden",
+      "spire",
+      "gothic",
+      "tallest-wooden"
+    ],
+    "svgFilename": "gy-georgetown.svg",
+    "description": "Georgetown is the capital of Guyana, home to the magnificent St. George's Cathedral - one of the tallest wooden churches in the world. This stunning Gothic Revival cathedral, with its soaring wooden spire reaching 43 meters, was designed by Sir Arthur Blomfield and completed in 1892. Built entirely from tropical hardwood, the cathedral stands as a remarkable feat of 19th-century engineering and a beloved symbol of Georgetown's colonial heritage.",
+    "region": "South America"
+  },
+  {
+    "_id": "271",
+    "name": "La Paz Witches' Market",
+    "city": "La Paz",
+    "country": "Bolivia",
+    "category": "Culture",
+    "tags": [
+      "witches-market",
+      "mercado-de-las-brujas",
+      "llama",
+      "talisman",
+      "aymara"
+    ],
+    "svgFilename": "bo-la-paz.svg",
+    "description": "La Paz is Bolivia's highest-altitude capital, home to the legendary Mercado de las Brujas (Witches' Market) nestled in the steep streets near Cerro Cumbre. Here Aymara herbalists and yatiris sell dried llama fetuses, talismans, and amulets used in traditional offerings to Pachamama — Mother Earth. The dried llama, the market's most iconic symbol, is buried beneath new buildings to bring prosperity and protection. This centuries-old tradition blends indigenous Andean spirituality with daily life in one of the world's most extraordinary marketplaces.",
+    "region": "South America"
+  },
+  {
+    "_id": "272",
+    "name": "Caracas Teresa Carreño Cultural Complex",
+    "city": "Caracas",
+    "country": "Venezuela",
+    "category": "Landmarks",
+    "tags": [
+      "teresa-carreno",
+      "cultural-complex",
+      "theater",
+      "brutalist",
+      "performing-arts"
+    ],
+    "svgFilename": "ve-caracas.svg",
+    "description": "Caracas is the dynamic capital of Venezuela, home to the monumental Teresa Carreño Cultural Complex — one of the largest performing arts centers in South America. Named after the legendary 19th-century Venezuelan pianist, this striking brutalist landmark was inaugurated in 1983 and houses two grand concert halls with a combined capacity of over 3,000 seats. Its bold concrete forms rising against the backdrop of Mount Ávila have made it an enduring symbol of Caracas's cultural ambition and artistic heritage.",
+    "region": "South America"
+  },
+  {
+    "_id": "273",
+    "name": "Valparaíso Completo",
+    "city": "Valparaíso",
+    "country": "Chile",
+    "category": "Culture",
+    "tags": [
+      "completo",
+      "hot-dog",
+      "street-food",
+      "chilean-cuisine",
+      "avocado"
+    ],
+    "svgFilename": "cl-valparaiso.svg",
+    "description": "Valparaíso is Chile's colorful port city, celebrated for its hillside funiculars, vibrant street art, and the beloved completo — the Chilean hot dog that has become a national icon. Piled high with mashed avocado, diced tomatoes, sauerkraut, and a generous drizzle of mayonnaise, the completo is a uniquely Chilean reinvention of the humble hot dog. Found at every street corner and fuente de soda across the country, it embodies Chile's playful spirit of turning simple ingredients into something unmistakably its own.",
+    "region": "South America"
+  },
+  {
+    "_id": "275",
+    "name": "Monumento a la Mitad del Mundo",
+    "city": "Quito",
+    "country": "Ecuador",
+    "category": "Landmarks",
+    "tags": [
+      "mitad-del-mundo",
+      "equator",
+      "monument",
+      "geodesic",
+      "latitude-zero"
+    ],
+    "svgFilename": "ec-quito.svg",
+    "description": "Quito is Ecuador's capital, perched at 2,850 meters in the Andes and home to the Monumento a la Mitad del Mundo — the iconic equator monument marking latitude 0°0′0″. Built in 1982 at the site where the 18th-century French Geodesic Mission first measured the equatorial line, the 30-meter trapezoidal tower is crowned by a globe and has become one of South America's most visited landmarks. Standing at the literal center of the Earth, it symbolizes Ecuador's unique geographic identity and the scientific heritage that gave the country its name.",
+    "region": "South America"
+  },
+  {
+    "_id": "294",
+    "name": "São Paulo MASP",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "category": "Landmarks",
+    "tags": [
+      "masp",
+      "museum",
+      "brutalist",
+      "modern-architecture",
+      "art"
+    ],
+    "svgFilename": "br-sao-paolo.svg",
+    "description": "São Paulo is Brazil's sprawling cultural and financial capital, home to the Museu de Arte de São Paulo (MASP) — one of Latin America's most important art museums. Designed by Lina Bo Bardi and completed in 1968, the brutalist landmark is suspended above an open plaza by bold red concrete beams, creating a dramatic 74-meter free span that has become an icon of modern Brazilian architecture. The museum houses a world-class collection spanning European masters to contemporary Brazilian art.",
+    "region": "South America"
+  }
+]
